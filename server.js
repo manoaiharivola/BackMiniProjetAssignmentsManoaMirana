@@ -1,7 +1,7 @@
 let express = require('express');
 let app = express();
 let bodyParser = require('body-parser');
-let assignment = require('./routes/assignments');
+let configureRouter = require('./config/router.config')
 
 let mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
@@ -9,6 +9,7 @@ mongoose.Promise = global.Promise;
 
 let dotenv = require('dotenv');
 dotenv.config();
+
 
 
 const uri = process.env.DB_URI;
@@ -44,19 +45,8 @@ app.use(bodyParser.json());
 // Obligatoire si déploiement dans le cloud !
 let port = process.env.PORT || 8010;
 
-// les routes
-const prefix = '/api';
-
-// http://serveur..../assignments
-app.route(prefix + '/assignments')
-  .post(assignment.postAssignment)
-  .put(assignment.updateAssignment)
-  .get(assignment.getAssignments);
-
-app.route(prefix + '/assignments/:id')
-  .get(assignment.getAssignment)
-  .delete(assignment.deleteAssignment);
-
+// Router 
+configureRouter(app);
 
 // On démarre le serveur
 app.listen(port, "0.0.0.0");
