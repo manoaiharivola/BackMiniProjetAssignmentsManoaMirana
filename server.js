@@ -7,6 +7,9 @@ let mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 // mongoose.set('debug', true);
 
+let dotenv = require('dotenv');
+dotenv.config();
+
 
 const uri = process.env.DB_URI;
 
