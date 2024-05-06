@@ -4,6 +4,7 @@ let bcrypt = require("bcrypt");
 
 const authenticationService = {
   register,
+  login,
 };
 
 function register(req, res) {
@@ -70,6 +71,39 @@ function register(req, res) {
       });
     });
   });
+}
+
+function login(req, res) {
+  const { mail, mdp } = req.body;
+
+  UserConnection.findOne(
+    { mail: mail },
+    async (err, existingUserConnection) => {
+      if (err) {
+        return res.status(500).json({
+          message: "Erreur lors de la recherche d'utilisateur.",
+        });
+      }
+
+      if (!existingUserConnection) {
+        return res.status(400).json({
+          message: "Email ou mot de passe incorrect.",
+        });
+      }
+
+      const match = bcrypt.compareSync(mdp, existingUserConnection.mdp_hash);
+
+      if (!match) {
+        return res.status(400).json({
+          message: "Email ou mot de passe incorrect.",
+        });
+      }
+
+      res.status(200).json({
+        message: "OK",
+      });
+    }
+  );
 }
 
 module.exports = authenticationService;
