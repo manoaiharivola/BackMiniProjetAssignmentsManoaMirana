@@ -1,6 +1,6 @@
 let express = require('express');
 let router = express.Router();
-let assignmentService = require('../services/assignments.service');
+let assignmentService = require('../services/assignment.service');
 
 router.post('/', assignmentService.postAssignment);
 router.put('/', assignmentService.updateAssignment);
