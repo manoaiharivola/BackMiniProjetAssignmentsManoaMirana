@@ -1,6 +1,7 @@
 let User = require("../model/user");
 let UserConnection = require("../model/user_connection");
 let bcrypt = require("bcrypt");
+let TokenService = require("./token.service");
 
 const authenticationService = {
   register,
@@ -24,7 +25,7 @@ function register(req, res) {
 
     if (existingUserConnection) {
       return res
-        .status(400)
+        .status(409)
         .json({ message: "Un utilisateur avec cet email existe déjà." });
     }
 
@@ -51,10 +52,10 @@ function register(req, res) {
             savedUserConnection._id,
             (deleteErr) => {
               if (deleteErr) {
-                console.error(
-                  "Erreur lors de la suppression de l'utilisateur après échec de la sauvegarde.",
-                  deleteErr
-                );
+                res.status(500).json({
+                  message:
+                    "Erreur lors de la suppression de l'utilisateur après échec de la sauvegarde.",
+                });
               }
               res.status(500).json({
                 message:
@@ -73,37 +74,62 @@ function register(req, res) {
   });
 }
 
-function login(req, res) {
+async function login(req, res) {
   const { mail, mdp } = req.body;
 
-  UserConnection.findOne(
-    { mail: mail },
-    async (err, existingUserConnection) => {
-      if (err) {
-        return res.status(500).json({
-          message: "Erreur lors de la recherche d'utilisateur.",
-        });
-      }
-
-      if (!existingUserConnection) {
-        return res.status(400).json({
-          message: "Email ou mot de passe incorrect.",
-        });
-      }
-
-      const match = bcrypt.compareSync(mdp, existingUserConnection.mdp_hash);
-
-      if (!match) {
-        return res.status(400).json({
-          message: "Email ou mot de passe incorrect.",
-        });
-      }
-
-      res.status(200).json({
-        message: "OK",
+  UserConnection.findOne({ mail: mail }, (err, existingUserConnection) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Erreur lors de la recherche de connexion d'utilisateur.",
       });
     }
-  );
+
+    if (!existingUserConnection) {
+      return res.status(401).json({
+        message: "Email ou mot de passe incorrect.",
+      });
+    }
+
+    const match = bcrypt.compareSync(mdp, existingUserConnection.mdp_hash);
+
+    if (!match) {
+      return res.status(401).json({
+        message: "Email ou mot de passe incorrect.",
+      });
+    }
+
+    User.findOne(
+      { user_connection_id: existingUserConnection._id },
+      async (err, user) => {
+        if (err) {
+          return res.status(500).json({
+            message: "Erreur lors de la recherche d'utilisateur.",
+          });
+        }
+
+        if (!user) {
+          return res.status(404).json({
+            message:
+              "Les informations de l'utilisateur n'ont pas été trouvées.",
+          });
+        }
+
+        try {
+          let { access_token, expires_at } =
+            await TokenService.generateAuthTokens(user);
+
+          res.status(200).json({
+            access_token: access_token,
+            expires_at: expires_at,
+          });
+        } catch (tokenErr) {
+          res.status(500).json({
+            message: "Erreur lors de la génération de  l'access token.",
+          });
+        }
+      }
+    );
+  });
 }
 
 module.exports = authenticationService;
