@@ -2,6 +2,8 @@ let express = require("express");
 let app = express();
 let bodyParser = require("body-parser");
 let configureRouter = require("./config/router.config");
+let passport = require("passport");
+let { jwtStrategy } = require("./config/passport.config");
 
 let mongoose = require("mongoose");
 mongoose.Promise = global.Promise;
@@ -43,6 +45,11 @@ app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   next();
 });
+
+//Middlewares
+
+app.use(passport.initialize());
+passport.use("jwt", jwtStrategy);
 
 // Pour les formulaires
 app.use(bodyParser.urlencoded({ extended: true }));
