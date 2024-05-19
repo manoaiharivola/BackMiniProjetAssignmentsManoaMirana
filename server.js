@@ -1,6 +1,7 @@
 let express = require("express");
 let app = express();
 let bodyParser = require("body-parser");
+let cors = require("cors");
 let configureRouter = require("./config/router.config");
 let passport = require("passport");
 let { jwtStrategy } = require("./config/passport.config");
@@ -36,7 +37,11 @@ mongoose.connect(uri, options).then(
 );
 
 // Pour accepter les connexions cross-domain (CORS)
-app.use(function (req, res, next) {
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(cors());
+app.options("*", cors());
+/*app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
     "Access-Control-Allow-Headers",
@@ -44,7 +49,7 @@ app.use(function (req, res, next) {
   );
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   next();
-});
+});*/
 
 //Middlewares
 
