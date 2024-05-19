@@ -5,9 +5,9 @@ let authenticationMiddleware = require("../middlewares/authentication.middleware
 
 router.post("/", assignmentService.postAssignment);
 router.put("/", assignmentService.updateAssignment);
-router.get("/", authenticationMiddleware(), assignmentService.getAssignments);
+router.get("/", assignmentService.getAssignments);
 
-router.get("/:id", authenticationMiddleware(), assignmentService.getAssignment);
+router.get("/:id", assignmentService.getAssignment);
 router.delete("/:id", assignmentService.deleteAssignment);
 
 module.exports = router;
