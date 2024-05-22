@@ -29,8 +29,26 @@ const generateAuthTokens = async (user) => {
   };
 };
 
+const generateTeacherAuthTokens = async (teacher) => {
+  const accessTokenExpires = moment().add(
+    process.env.JWT_ACCESS_EXPIRATION_DURATION,
+    "minutes"
+  );
+
+  const teacher_access_token = generateToken(
+    teacher._id,
+    accessTokenExpires,
+    "ACCESS"
+  );
+  return {
+    teacher_access_token: teacher_access_token,
+    expires_at: accessTokenExpires.toDate(),
+  };
+};
+
 const tokenService = {
   generateToken,
   generateAuthTokens,
+  generateTeacherAuthTokens,
 };
 module.exports = tokenService;

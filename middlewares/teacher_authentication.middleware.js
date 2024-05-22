@@ -1,25 +1,25 @@
 let passport = require("passport");
 
 const verifyCallback =
-  (req, resolve, reject, requiredRights) => async (err, user, info) => {
-    if (err || info || !user) {
+  (req, resolve, reject, requiredRights) => async (err, teacher, info) => {
+    if (err || info || !teacher) {
       return reject({
         status: 401,
         message: "Please authenticate.",
       });
     }
-    req.user = user;
+    req.teacher = teacher;
     if (requiredRights && requiredRights.length) {
     }
     resolve();
   };
 
-const authenticationMiddleware =
+const teacherAuthenticationMiddleware =
   (...requiredRights) =>
   async (req, res, next) => {
     return new Promise((resolve, reject) => {
       passport.authenticate(
-        "jwt",
+        "jwtTeacher",
         { session: false },
         verifyCallback(req, resolve, reject, requiredRights)
       )(req, res, next);
@@ -33,4 +33,4 @@ const authenticationMiddleware =
       });
   };
 
-module.exports = authenticationMiddleware;
+module.exports = teacherAuthenticationMiddleware;

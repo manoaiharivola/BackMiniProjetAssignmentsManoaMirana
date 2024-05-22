@@ -1,9 +1,11 @@
-let assignmentRoute = require('../routes/assignment.route')
-let authenticationRoute = require('../routes/authentication.route')
+let assignmentRoute = require("../routes/assignment.route");
+let authenticationRoute = require("../routes/authentication.route");
+let teacherAuthenticationRoute = require("../routes/teacher_authentication.route");
 const configureRouter = (app) => {
-    const prefix = '/api';
-    app.use(prefix +'/assignments', assignmentRoute)
-    app.use(prefix +'/authentication', authenticationRoute)
-}
+  const prefix = "/api";
+  app.use(prefix + "/assignments", assignmentRoute);
+  app.use(prefix + "/authentication", authenticationRoute);
+  app.use(prefix + "/teacher/authentication", teacherAuthenticationRoute);
+};
 
-module.exports = configureRouter
+module.exports = configureRouter;
