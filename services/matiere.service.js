@@ -163,30 +163,6 @@ function deleteMatiere(req, res) {
   });
 }
 
-// Récupérer le nombre d'etudiants inscrits dans une matière spécifique
-async function getNombreEtudiants(req, res) {
-  try {
-    const matiereId = req.params.id;
-    const matiere = await Matiere.findById(matiereId).populate(
-      "etudiant_inscrits"
-    );
-    if (!matiere) {
-      return res.status(404).json({ message: "Matière non trouvée" });
-    }
-    const nombreEtudiants = matiere.etudiant_inscrits.length;
-    res.json({ nombre_etudiants: nombreEtudiants });
-  } catch (error) {
-    console.error(
-      "Erreur lors de la récupération du nombre d'etudiants inscrits :",
-      error
-    );
-    res.status(500).json({
-      message: "Erreur lors de la récupération du nombre d'etudiants inscrits",
-      error: error,
-    });
-  }
-}
-
 // Ajouter des etudiants à une matière spécifique
 async function ajouterEtudiants(req, res) {
   try {
@@ -221,6 +197,5 @@ module.exports = {
   getMatiere,
   updateMatiere,
   deleteMatiere,
-  getNombreEtudiants,
   ajouterEtudiants,
 };
