@@ -1,18 +1,8 @@
 let Matiere = require("../model/matiere");
+let mongoose = require("mongoose");
+let ObjectId = mongoose.Types.ObjectId;
 
 // Récupérer tous les matieres (GET)
-/*
-function getMatieres(req, res){
-    Matiere.find((err, matieres) => {
-        if(err){
-            res.send(err)
-        }
-
-        res.send(matieres);
-    });
-}
-*/
-
 function getMatieres(req, res) {
   let aggregateQuery = Matiere.aggregate();
 
@@ -24,10 +14,12 @@ function getMatieres(req, res) {
     },
     (err, data) => {
       if (err) {
-        res.send(err);
+        return res.status(500).send({
+          message: "Erreur lors de la récupération des matières",
+          error: err,
+        });
       }
-
-      res.send(data);
+      res.status(200).send(data);
     }
   );
 }
@@ -37,63 +29,141 @@ function getMatiere(req, res) {
   let matiereId = req.params.id;
   Matiere.findById(matiereId, (err, matiere) => {
     if (err) {
-      res.send(err);
+      return res.status(500).send({
+        message: "Erreur lors de la récupération de la matière",
+        error: err,
+      });
     }
-    res.json(matiere);
+    if (!matiere) {
+      return res.status(404).send({ message: "Matière non trouvée" });
+    }
+    res.status(200).json(matiere);
   });
-
-  /*
-    Matiere.findOne({id: matiereId}, (err, matiere) =>{
-        if(err){res.send(err)}
-        res.json(matiere);
-    })
-    */
 }
 
 // Ajout d'un matiere (POST)
 function postMatiere(req, res) {
-  let matiere = new Matiere();
-  matiere.name = req.body.name;
-  matiere.teacher_id = req.teacher._id;
-  console.log("POST matiere reçu :");
-
-  matiere.save((err) => {
+  Matiere.findOne({ name: req.body.name }, (err, existingMatiere) => {
     if (err) {
-      res.send("cant post matiere ", err);
+      return res.status(500).send({
+        message: "Erreur lors de la vérification de la matière",
+        error: err,
+      });
     }
-    res.json({ message: `${matiere.name} saved!` });
+    if (existingMatiere) {
+      return res
+        .status(400)
+        .send({ message: "Le nom de la matière existe déjà" });
+    }
+
+    let matiere = new Matiere();
+    matiere.name = req.body.name;
+    matiere.teacher_id = req.teacher._id;
+    console.log("POST matière reçu :");
+
+    matiere.save((err) => {
+      if (err) {
+        return res.status(500).send({
+          message: "Erreur lors de l'enregistrement de la matière",
+          error: err,
+        });
+      }
+      res.status(201).json({ message: `${matiere.name} sauvegardée !` });
+    });
   });
 }
 
 // Update d'un matiere (PUT)
 function updateMatiere(req, res) {
-  console.log("UPDATE recu matiere : ");
+  console.log("UPDATE reçu matière : ");
   console.log(req.body);
-  Matiere.findByIdAndUpdate(
-    req.body._id,
-    req.body,
-    { new: true },
-    (err, matiere) => {
+
+  Matiere.findOne({ name: req.body.name }, (err, existingMatiere) => {
+    if (err) {
+      return res
+        .status(500)
+        .send({
+          message: "Erreur lors de la vérification de la matière",
+          error: err,
+        });
+    }
+    if (existingMatiere && existingMatiere._id.toString() !== req.body._id) {
+      return res
+        .status(400)
+        .send({ message: "Le nom de la matière existe déjà" });
+    }
+
+    // Récupérer la matière existante pour conserver teacher_id et vérifier les changements
+    Matiere.findById(req.body._id, (err, matiere) => {
       if (err) {
-        console.log(err);
-        res.send(err);
-      } else {
-        res.json({ message: "updated" });
+        return res
+          .status(500)
+          .send({
+            message: "Erreur lors de la récupération de la matière existante",
+            error: err,
+          });
+      }
+      if (!matiere) {
+        return res.status(404).send({ message: "Matière non trouvée" });
       }
 
-      // console.log('updated ', matiere)
-    }
-  );
+      // Conserver teacher_id existant si non fourni
+      if (!req.body.teacher_id) {
+        req.body.teacher_id = matiere.teacher_id;
+      } else {
+        req.body.teacher_id = ObjectId(req.body.teacher_id);
+      }
+
+      // Vérifier si quelque chose a changé
+      const updates = {
+        name: req.body.name,
+        teacher_id: req.body.teacher_id,
+      };
+
+      if (
+        updates.name === matiere.name &&
+        updates.teacher_id.toString() === matiere.teacher_id.toString()
+      ) {
+        return res.status(400).send({ message: "Aucun changement détecté" });
+      }
+
+      // Effectuer la mise à jour si des changements sont détectés
+      Matiere.findByIdAndUpdate(
+        req.body._id,
+        updates,
+        { new: true },
+        (err, updatedMatiere) => {
+          if (err) {
+            console.log(err);
+            return res
+              .status(500)
+              .send({
+                message: "Erreur lors de la mise à jour de la matière",
+                error: err,
+              });
+          }
+          res
+            .status(200)
+            .json({ message: "Matière mise à jour", matiere: updatedMatiere });
+        }
+      );
+    });
+  });
 }
 
 // suppression d'un matiere (DELETE)
-// l'id est bien le _id de mongoDB
 function deleteMatiere(req, res) {
   Matiere.findByIdAndRemove(req.params.id, (err, matiere) => {
     if (err) {
-      res.send(err);
+      return res.status(500).send({
+        message: "Erreur lors de la suppression de la matière",
+        error: err,
+      });
     }
-    res.json({ message: `${matiere.name} deleted` });
+    if (!matiere) {
+      return res.status(404).send({ message: "Matière non trouvée" });
+    }
+    res.status(200).json({ message: `${matiere.name} supprimée` });
   });
 }
 
