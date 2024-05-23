@@ -59,6 +59,8 @@ function postMatiere(req, res) {
     let matiere = new Matiere();
     matiere.name = req.body.name;
     matiere.teacher_id = req.teacher._id;
+    matiere.etudiant_inscrits = [];
+
     console.log("POST matière reçu :");
 
     matiere.save((err) => {
@@ -80,12 +82,10 @@ function updateMatiere(req, res) {
 
   Matiere.findOne({ name: req.body.name }, (err, existingMatiere) => {
     if (err) {
-      return res
-        .status(500)
-        .send({
-          message: "Erreur lors de la vérification de la matière",
-          error: err,
-        });
+      return res.status(500).send({
+        message: "Erreur lors de la vérification de la matière",
+        error: err,
+      });
     }
     if (existingMatiere && existingMatiere._id.toString() !== req.body._id) {
       return res
@@ -96,12 +96,10 @@ function updateMatiere(req, res) {
     // Récupérer la matière existante pour conserver teacher_id et vérifier les changements
     Matiere.findById(req.body._id, (err, matiere) => {
       if (err) {
-        return res
-          .status(500)
-          .send({
-            message: "Erreur lors de la récupération de la matière existante",
-            error: err,
-          });
+        return res.status(500).send({
+          message: "Erreur lors de la récupération de la matière existante",
+          error: err,
+        });
       }
       if (!matiere) {
         return res.status(404).send({ message: "Matière non trouvée" });
@@ -135,12 +133,10 @@ function updateMatiere(req, res) {
         (err, updatedMatiere) => {
           if (err) {
             console.log(err);
-            return res
-              .status(500)
-              .send({
-                message: "Erreur lors de la mise à jour de la matière",
-                error: err,
-              });
+            return res.status(500).send({
+              message: "Erreur lors de la mise à jour de la matière",
+              error: err,
+            });
           }
           res
             .status(200)
@@ -167,10 +163,64 @@ function deleteMatiere(req, res) {
   });
 }
 
+// Récupérer le nombre d'etudiants inscrits dans une matière spécifique
+async function getNombreEtudiants(req, res) {
+  try {
+    const matiereId = req.params.id;
+    const matiere = await Matiere.findById(matiereId).populate(
+      "etudiant_inscrits"
+    );
+    if (!matiere) {
+      return res.status(404).json({ message: "Matière non trouvée" });
+    }
+    const nombreEtudiants = matiere.etudiant_inscrits.length;
+    res.json({ nombre_etudiants: nombreEtudiants });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération du nombre d'etudiants inscrits :",
+      error
+    );
+    res.status(500).json({
+      message: "Erreur lors de la récupération du nombre d'etudiants inscrits",
+      error: error,
+    });
+  }
+}
+
+// Ajouter des etudiants à une matière spécifique
+async function ajouterEtudiants(req, res) {
+  try {
+    const matiereId = req.params.id;
+    const etudiants = req.body.etudiants;
+    const matiere = await Matiere.findById(matiereId);
+    if (!matiere) {
+      return res.status(404).json({ message: "Matière non trouvée" });
+    }
+
+    // Réinitialiser la liste des etudiants inscrits
+    matiere.etudiant_inscrits = [];
+
+    // Ajouter les etudiants à la matière
+    matiere.etudiant_inscrits.push(...etudiants);
+    await matiere.save();
+    res
+      .status(201)
+      .json({ message: "Etudiants ajoutés avec succès à la matière" });
+  } catch (error) {
+    console.error("Erreur lors de l'ajout des etudiants à la matière :", error);
+    res.status(500).json({
+      message: "Erreur lors de l'ajout des etudiants à la matière",
+      error: error,
+    });
+  }
+}
+
 module.exports = {
   getMatieres,
   postMatiere,
   getMatiere,
   updateMatiere,
   deleteMatiere,
+  getNombreEtudiants,
+  ajouterEtudiants,
 };
