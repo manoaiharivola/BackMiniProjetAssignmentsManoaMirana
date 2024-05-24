@@ -4,7 +4,10 @@ let bodyParser = require("body-parser");
 let cors = require("cors");
 let configureRouter = require("./config/router.config");
 let passport = require("passport");
-let { jwtStrategy, jwtTeacherStrategy } = require("./config/passport.config");
+let {
+  jwtStrategy,
+  jwtProfesseurStrategy,
+} = require("./config/passport.config");
 
 let mongoose = require("mongoose");
 mongoose.Promise = global.Promise;
@@ -55,7 +58,7 @@ app.options("*", cors());
 
 app.use(passport.initialize());
 passport.use("jwt", jwtStrategy);
-passport.use("jwtTeacher", jwtTeacherStrategy);
+passport.use("jwtProfesseur", jwtProfesseurStrategy);
 
 // Pour les formulaires
 app.use(bodyParser.urlencoded({ extended: true }));

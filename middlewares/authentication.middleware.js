@@ -1,14 +1,14 @@
 let passport = require("passport");
 
 const verifyCallback =
-  (req, resolve, reject, requiredRights) => async (err, user, info) => {
-    if (err || info || !user) {
+  (req, resolve, reject, requiredRights) => async (err, etudiant, info) => {
+    if (err || info || !etudiant) {
       return reject({
         status: 401,
         message: "Please authenticate.",
       });
     }
-    req.user = user;
+    req.etudiant = etudiant;
     if (requiredRights && requiredRights.length) {
     }
     resolve();

@@ -1,31 +1,31 @@
-let Teacher = require("../model/teacher");
-let TeacherConnection = require("../model/teacher_connection");
+let Professeur = require("../model/professeur");
+let ProfesseurConnection = require("../model/professeur_connexion");
 let bcrypt = require("bcrypt");
 let TokenService = require("./token.service");
 
-const teacherAuthenticationService = {
-  register,
-  login,
+const professeurAuthenticationService = {
+  inscription,
+  connexion,
 };
 
-function register(req, res) {
-  let teacher = new Teacher();
-  teacher.nom = req.body.nom;
-  teacher.prenom = req.body.prenom;
-  teacher.mail = req.body.mail;
+function inscription(req, res) {
+  let professeur = new Professeur();
+  professeur.nom = req.body.nom;
+  professeur.prenom = req.body.prenom;
+  professeur.mail = req.body.mail;
 
   let mdp = req.body.mdp;
 
-  TeacherConnection.findOne(
-    { mail: teacher.mail },
-    (err, existingTeacherConnection) => {
+  ProfesseurConnection.findOne(
+    { mail: professeur.mail },
+    (err, existingProfesseurConnection) => {
       if (err) {
         return res
           .status(500)
           .json({ message: "Erreur lors de la recherche de professeur." });
       }
 
-      if (existingTeacherConnection) {
+      if (existingProfesseurConnection) {
         return res
           .status(409)
           .json({ message: "Un professeur avec cet email existe déjà." });
@@ -34,24 +34,24 @@ function register(req, res) {
       const salt = bcrypt.genSaltSync();
       const hash = bcrypt.hashSync(mdp, salt);
 
-      const newTeacherConnection = new TeacherConnection({
-        mail: teacher.mail,
+      const newProfesseurConnection = new ProfesseurConnection({
+        mail: professeur.mail,
         mdp_hash: hash,
       });
 
-      newTeacherConnection.save((err, savedTeacherConnection) => {
+      newProfesseurConnection.save((err, savedProfesseurConnection) => {
         if (err) {
           return res.status(500).json({
             message: "Erreur lors de la création du nouvel professeur.",
           });
         }
 
-        teacher.teacher_connection_id = savedTeacherConnection._id;
+        professeur.professeur_connexion_id = savedProfesseurConnection._id;
 
-        teacher.save((err) => {
+        professeur.save((err) => {
           if (err) {
-            return TeacherConnection.findByIdAndDelete(
-              savedTeacherConnection._id,
+            return ProfesseurConnection.findByIdAndDelete(
+              savedProfesseurConnection._id,
               (deleteErr) => {
                 if (deleteErr) {
                   res.status(500).json({
@@ -77,25 +77,28 @@ function register(req, res) {
   );
 }
 
-async function login(req, res) {
+async function connexion(req, res) {
   const { mail, mdp } = req.body;
 
-  TeacherConnection.findOne(
+  ProfesseurConnection.findOne(
     { mail: mail },
-    (err, existingTeacherConnection) => {
+    (err, existingProfesseurConnection) => {
       if (err) {
         return res.status(500).json({
           message: "Erreur lors de la recherche de connexion de professeur.",
         });
       }
 
-      if (!existingTeacherConnection) {
+      if (!existingProfesseurConnection) {
         return res.status(401).json({
           message: "Email ou mot de passe incorrect.",
         });
       }
 
-      const match = bcrypt.compareSync(mdp, existingTeacherConnection.mdp_hash);
+      const match = bcrypt.compareSync(
+        mdp,
+        existingProfesseurConnection.mdp_hash
+      );
 
       if (!match) {
         return res.status(401).json({
@@ -103,16 +106,16 @@ async function login(req, res) {
         });
       }
 
-      Teacher.findOne(
-        { teacher_connection_id: existingTeacherConnection._id },
-        async (err, teacher) => {
+      Professeur.findOne(
+        { professeur_connexion_id: existingProfesseurConnection._id },
+        async (err, professeur) => {
           if (err) {
             return res.status(500).json({
               message: "Erreur lors de la recherche de professeur.",
             });
           }
 
-          if (!teacher) {
+          if (!professeur) {
             return res.status(404).json({
               message:
                 "Les informations de l'professeur n'ont pas été trouvées.",
@@ -120,11 +123,11 @@ async function login(req, res) {
           }
 
           try {
-            let { teacher_access_token, expires_at } =
-              await TokenService.generateTeacherAuthTokens(teacher);
+            let { professeur_access_token, expires_at } =
+              await TokenService.generateProfesseurAuthTokens(professeur);
 
             res.status(200).json({
-              teacher_access_token: teacher_access_token,
+              professeur_access_token: professeur_access_token,
               expires_at: expires_at,
             });
           } catch (tokenErr) {
@@ -138,4 +141,4 @@ async function login(req, res) {
   );
 }
 
-module.exports = teacherAuthenticationService;
+module.exports = professeurAuthenticationService;

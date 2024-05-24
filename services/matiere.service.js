@@ -1,7 +1,7 @@
 let Matiere = require("../model/matiere");
 let mongoose = require("mongoose");
 let ObjectId = mongoose.Types.ObjectId;
-const User = require("../model/user");
+const Etudiant = require("../model/etudiant");
 
 // Récupérer tous les matieres (GET)
 function getMatieres(req, res) {
@@ -44,7 +44,7 @@ function getMatiere(req, res) {
 
 // Ajout d'un matiere (POST)
 function postMatiere(req, res) {
-  Matiere.findOne({ name: req.body.name }, (err, existingMatiere) => {
+  Matiere.findOne({ nom: req.body.nom }, (err, existingMatiere) => {
     if (err) {
       return res.status(500).send({
         message: "Erreur lors de la vérification de la matière",
@@ -58,8 +58,8 @@ function postMatiere(req, res) {
     }
 
     let matiere = new Matiere();
-    matiere.name = req.body.name;
-    matiere.teacher_id = req.teacher._id;
+    matiere.nom = req.body.nom;
+    matiere.professeur_id = req.professeur._id;
     matiere.etudiant_inscrits = [];
 
     console.log("POST matière reçu :");
@@ -71,7 +71,7 @@ function postMatiere(req, res) {
           error: err,
         });
       }
-      res.status(201).json({ message: `${matiere.name} sauvegardée !` });
+      res.status(201).json({ message: `${matiere.nom} sauvegardée !` });
     });
   });
 }
@@ -81,7 +81,7 @@ function updateMatiere(req, res) {
   console.log("UPDATE reçu matière : ");
   console.log(req.body);
 
-  Matiere.findOne({ name: req.body.name }, (err, existingMatiere) => {
+  Matiere.findOne({ nom: req.body.nom }, (err, existingMatiere) => {
     if (err) {
       return res.status(500).send({
         message: "Erreur lors de la vérification de la matière",
@@ -94,7 +94,7 @@ function updateMatiere(req, res) {
         .send({ message: "Le nom de la matière existe déjà" });
     }
 
-    // Récupérer la matière existante pour conserver teacher_id et vérifier les changements
+    // Récupérer la matière existante pour conserver professeur_id et vérifier les changements
     Matiere.findById(req.body._id, (err, matiere) => {
       if (err) {
         return res.status(500).send({
@@ -106,22 +106,22 @@ function updateMatiere(req, res) {
         return res.status(404).send({ message: "Matière non trouvée" });
       }
 
-      // Conserver teacher_id existant si non fourni
-      if (!req.body.teacher_id) {
-        req.body.teacher_id = matiere.teacher_id;
+      // Conserver professeur_id existant si non fourni
+      if (!req.body.professeur_id) {
+        req.body.professeur_id = matiere.professeur_id;
       } else {
-        req.body.teacher_id = ObjectId(req.body.teacher_id);
+        req.body.professeur_id = ObjectId(req.body.professeur_id);
       }
 
       // Vérifier si quelque chose a changé
       const updates = {
-        name: req.body.name,
-        teacher_id: req.body.teacher_id,
+        nom: req.body.nom,
+        professeur_id: req.body.professeur_id,
       };
 
       if (
-        updates.name === matiere.name &&
-        updates.teacher_id.toString() === matiere.teacher_id.toString()
+        updates.nom === matiere.nom &&
+        updates.professeur_id.toString() === matiere.professeur_id.toString()
       ) {
         return res.status(400).send({ message: "Aucun changement détecté" });
       }
@@ -160,7 +160,7 @@ function deleteMatiere(req, res) {
     if (!matiere) {
       return res.status(404).send({ message: "Matière non trouvée" });
     }
-    res.status(200).json({ message: `${matiere.name} supprimée` });
+    res.status(200).json({ message: `${matiere.nom} supprimée` });
   });
 }
 
@@ -206,7 +206,7 @@ async function getEtudiantsParMatiere(req, res) {
     }
 
     // Récupérer tous les étudiants
-    const tousLesEtudiants = await User.find();
+    const tousLesEtudiants = await Etudiant.find();
 
     // Ajouter le statut d'inscription pour chaque étudiant
     const etudiantsAvecStatut = tousLesEtudiants.map((etudiant) => {

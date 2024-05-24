@@ -1,37 +1,45 @@
 let express = require("express");
 let router = express.Router();
 let matiereService = require("../services/matiere.service");
-let teacherAuthenticationMiddleware = require("../middlewares/teacher_authentication.middleware");
+let professeurAuthenticationMiddleware = require("../middlewares/professeur_authentication.middleware");
 
-router.post("/", teacherAuthenticationMiddleware(), matiereService.postMatiere);
+router.post(
+  "/",
+  professeurAuthenticationMiddleware(),
+  matiereService.postMatiere
+);
 router.put(
   "/",
-  teacherAuthenticationMiddleware(),
+  professeurAuthenticationMiddleware(),
   matiereService.updateMatiere
 );
-router.get("/", teacherAuthenticationMiddleware(), matiereService.getMatieres);
+router.get(
+  "/",
+  professeurAuthenticationMiddleware(),
+  matiereService.getMatieres
+);
 
 router.get(
   "/:id",
-  teacherAuthenticationMiddleware(),
+  professeurAuthenticationMiddleware(),
   matiereService.getMatiere
 );
 router.delete(
   "/:id",
-  teacherAuthenticationMiddleware(),
+  professeurAuthenticationMiddleware(),
   matiereService.deleteMatiere
 );
 
 // Route pour ajouter des etudiants à une matière spécifique
 router.post(
   "/:id/ajouter-etudiants",
-  teacherAuthenticationMiddleware(),
+  professeurAuthenticationMiddleware(),
   matiereService.ajouterEtudiants
 );
 
 router.get(
   "/:id/etudiants",
-  teacherAuthenticationMiddleware(),
+  professeurAuthenticationMiddleware(),
   matiereService.getEtudiantsParMatiere
 );
 

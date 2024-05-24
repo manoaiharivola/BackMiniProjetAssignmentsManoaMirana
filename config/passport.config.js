@@ -1,7 +1,7 @@
 let { Strategy: JwtStrategy, ExtractJwt } = require("passport-jwt");
-let User = require("../model/user");
+let Etudiant = require("../model/etudiant");
 let dotenv = require("dotenv");
-const Teacher = require("../model/teacher");
+const Professeur = require("../model/professeur");
 dotenv.config();
 
 let secret = process.env.JWT_SECRET;
@@ -20,38 +20,38 @@ const jwtVerify = async (payload, done) => {
       throw new Error("Invalid token type");
     }
 
-    const user = await User.findById(payload.sub);
-    if (!user) {
+    const etudiant = await Etudiant.findById(payload.sub);
+    if (!etudiant) {
       return done(null, false);
     }
-    done(null, user);
+    done(null, etudiant);
   } catch (error) {
     done(error, false);
   }
 };
 
-const jwtTeacherVerify = async (payload, done) => {
+const jwtProfesseurVerify = async (payload, done) => {
   try {
     if (payload.type !== "ACCESS") {
       throw new Error("Invalid token type");
     }
 
-    const teacher = await Teacher.findById(payload.sub);
-    if (!teacher) {
+    const professeur = await Professeur.findById(payload.sub);
+    if (!professeur) {
       return done(null, false);
     }
-    done(null, teacher);
+    done(null, professeur);
   } catch (error) {
     done(error, false);
   }
 };
 
 const jwtStrategy = new JwtStrategy(jwtOptions, jwtVerify);
-const jwtTeacherStrategy = new JwtStrategy(jwtOptions, jwtTeacherVerify);
+const jwtProfesseurStrategy = new JwtStrategy(jwtOptions, jwtProfesseurVerify);
 
 const passportConfig = {
   jwtStrategy,
-  jwtTeacherStrategy,
+  jwtProfesseurStrategy,
 };
 
 module.exports = passportConfig;
