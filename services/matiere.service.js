@@ -196,6 +196,7 @@ async function ajouterEtudiants(req, res) {
 async function getEtudiantsParMatiere(req, res) {
   try {
     const matiereId = req.params.id;
+    const { sortBy = "mail", order = "asc" } = req.query; // Valeurs par défaut : mail et asc
 
     // Trouver la matière pour obtenir les étudiants inscrits
     const matiere = await Matiere.findById(matiereId).populate(
@@ -209,7 +210,7 @@ async function getEtudiantsParMatiere(req, res) {
     const tousLesEtudiants = await Etudiant.find();
 
     // Ajouter le statut d'inscription pour chaque étudiant
-    const etudiantsAvecStatut = tousLesEtudiants.map((etudiant) => {
+    let etudiantsAvecStatut = tousLesEtudiants.map((etudiant) => {
       const estInscrit = matiere.etudiant_inscrits.some((inscrit) =>
         inscrit._id.equals(etudiant._id)
       );
@@ -217,6 +218,13 @@ async function getEtudiantsParMatiere(req, res) {
         ...etudiant.toObject(),
         inscrit: estInscrit,
       };
+    });
+
+    // Tri des étudiants
+    etudiantsAvecStatut.sort((a, b) => {
+      if (a[sortBy] < b[sortBy]) return order === "asc" ? -1 : 1;
+      if (a[sortBy] > b[sortBy]) return order === "asc" ? 1 : -1;
+      return 0;
     });
 
     res.status(200).json(etudiantsAvecStatut);
