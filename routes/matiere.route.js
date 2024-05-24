@@ -29,4 +29,10 @@ router.post(
   matiereService.ajouterEtudiants
 );
 
+router.get(
+  "/:id/etudiants",
+  teacherAuthenticationMiddleware(),
+  matiereService.getEtudiantsParMatiere
+);
+
 module.exports = router;

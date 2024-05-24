@@ -1,6 +1,7 @@
 let Matiere = require("../model/matiere");
 let mongoose = require("mongoose");
 let ObjectId = mongoose.Types.ObjectId;
+const User = require("../model/user");
 
 // Récupérer tous les matieres (GET)
 function getMatieres(req, res) {
@@ -191,6 +192,46 @@ async function ajouterEtudiants(req, res) {
   }
 }
 
+// Fonction pour lister les étudiants d'une matière
+async function getEtudiantsParMatiere(req, res) {
+  try {
+    const matiereId = req.params.id;
+
+    // Trouver la matière pour obtenir les étudiants inscrits
+    const matiere = await Matiere.findById(matiereId).populate(
+      "etudiant_inscrits"
+    );
+    if (!matiere) {
+      return res.status(404).json({ message: "Matière non trouvée" });
+    }
+
+    // Récupérer tous les étudiants
+    const tousLesEtudiants = await User.find();
+
+    // Ajouter le statut d'inscription pour chaque étudiant
+    const etudiantsAvecStatut = tousLesEtudiants.map((etudiant) => {
+      const estInscrit = matiere.etudiant_inscrits.some((inscrit) =>
+        inscrit._id.equals(etudiant._id)
+      );
+      return {
+        ...etudiant.toObject(),
+        inscrit: estInscrit,
+      };
+    });
+
+    res.status(200).json(etudiantsAvecStatut);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des étudiants avec statut :",
+      error
+    );
+    res.status(500).json({
+      message: "Erreur lors de la récupération des étudiants avec statut",
+      error: error,
+    });
+  }
+}
+
 module.exports = {
   getMatieres,
   postMatiere,
@@ -198,4 +239,5 @@ module.exports = {
   updateMatiere,
   deleteMatiere,
   ajouterEtudiants,
+  getEtudiantsParMatiere,
 };
