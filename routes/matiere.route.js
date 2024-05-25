@@ -20,6 +20,12 @@ router.get(
 );
 
 router.get(
+  "/professeur",
+  professeurAuthenticationMiddleware(),
+  matiereService.getProfesseurMatieres
+);
+
+router.get(
   "/:id",
   professeurAuthenticationMiddleware(),
   matiereService.getMatiere

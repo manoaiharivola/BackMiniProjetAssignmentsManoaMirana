@@ -25,6 +25,31 @@ function getMatieres(req, res) {
   );
 }
 
+function getProfesseurMatieres(req, res) {
+  const professeurId = req.professeur._id;
+
+  let aggregateQuery = Matiere.aggregate([
+    { $match: { professeur_id: ObjectId(professeurId) } },
+  ]);
+
+  Matiere.aggregatePaginate(
+    aggregateQuery,
+    {
+      page: parseInt(req.query.page) || 1,
+      limit: parseInt(req.query.limit) || 10,
+    },
+    (err, data) => {
+      if (err) {
+        return res.status(500).send({
+          message: "Erreur lors de la récupération des matières",
+          error: err,
+        });
+      }
+      res.status(200).send(data);
+    }
+  );
+}
+
 // Récupérer un matiere par son id (GET)
 function getMatiere(req, res) {
   let matiereId = req.params.id;
@@ -248,4 +273,5 @@ module.exports = {
   deleteMatiere,
   ajouterEtudiants,
   getEtudiantsParMatiere,
+  getProfesseurMatieres,
 };
