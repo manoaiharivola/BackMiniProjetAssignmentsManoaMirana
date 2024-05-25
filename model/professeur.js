@@ -6,7 +6,11 @@ let ProfesseurSchema = Schema({
   nom: String,
   prenom: String,
   mail: String,
-  professeur_connexion_id: Object,
+  professeur_connexion_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "professeur_connexions",
+    required: true,
+  },
 });
 
 ProfesseurSchema.plugin(mongoosePaginate);
