@@ -6,7 +6,11 @@ let EtudiantSchema = Schema({
   nom: String,
   prenom: String,
   mail: String,
-  etudiant_connexion_id: Object,
+  etudiant_connexion_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "etudiant_connexions",
+    required: true,
+  },
 });
 
 EtudiantSchema.plugin(mongoosePaginate);
