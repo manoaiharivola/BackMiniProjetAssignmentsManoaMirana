@@ -7,6 +7,6 @@ let ProfesseurConnectionSchema = Schema({
 });
 
 module.exports = mongoose.model(
-  "professeur_connections",
+  "professeur_connexions",
   ProfesseurConnectionSchema
 );

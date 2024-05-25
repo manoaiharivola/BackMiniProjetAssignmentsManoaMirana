@@ -26,12 +26,12 @@ const options = {
 
 mongoose.connect(uri, options).then(
   () => {
-    console.log("Connecté à la base MongoDB assignments dans le cloud !");
+    console.log("Connecté à la base MongoDB devoirs dans le cloud !");
     console.log("at URI = " + uri);
     console.log(
       "vérifiez with http://localhost:" +
         port +
-        "/api/assignments que cela fonctionne"
+        "/api/devoirs que cela fonctionne"
     );
   },
   (err) => {
