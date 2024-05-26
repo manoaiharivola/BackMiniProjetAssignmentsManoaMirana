@@ -5,6 +5,7 @@ const mongoosePaginate = require("mongoose-aggregate-paginate-v2");
 let DevoirSchema = Schema({
   dateDeRendu: Date,
   nom: String,
+  description: String,
   rendu: Boolean,
   matiere_id: {
     type: mongoose.Schema.Types.ObjectId,

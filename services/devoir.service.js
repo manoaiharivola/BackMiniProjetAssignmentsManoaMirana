@@ -32,6 +32,7 @@ function getDevoirs(req, res) {
         return {
           _id: devoir._id,
           nom: devoir.nom,
+          description: devoir.description,
           dateDeRendu: devoir.dateDeRendu,
           rendu: devoir.rendu,
           matiere_id: {
@@ -81,8 +82,8 @@ function getDevoir(req, res) {
 // Ajout d'un devoir (POST)
 function postDevoir(req, res) {
   let devoir = new Devoir();
-  devoir.id = req.body.id;
   devoir.nom = req.body.nom;
+  devoir.description = req.body.description;
   devoir.dateDeRendu = req.body.dateDeRendu;
   devoir.rendu = req.body.rendu;
   devoir.matiere_id = req.body.matiere_id;
