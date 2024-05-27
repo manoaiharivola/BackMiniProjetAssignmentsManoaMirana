@@ -13,8 +13,6 @@ async function creerDevoirsEtudiants(devoirId, matiereId, session) {
 
     const etudiantsIds = matiere.etudiant_inscrits;
 
-    console.log("*******************");
-    console.log(etudiantsIds);
     const devoirsEtudiants = etudiantsIds.map((etudiantId) => ({
       devoir_id: devoirId,
       etudiant_id: etudiantId,
@@ -22,14 +20,10 @@ async function creerDevoirsEtudiants(devoirId, matiereId, session) {
       remarques_note: "",
     }));
 
-    console.log(devoirsEtudiants);
-
     await DevoirEtudiant.insertMany(devoirsEtudiants, { session });
     return { message: "Devoirs étudiants créés avec succès." };
   } catch (error) {
-    throw new Error(
-      "Erreur lors de la création des devoirs étudiants : " + error.message
-    );
+    throw new Error(error);
   }
 }
 
