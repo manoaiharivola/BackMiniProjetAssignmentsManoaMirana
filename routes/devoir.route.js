@@ -11,6 +11,12 @@ router.post(
 router.put("/", devoirService.updateDevoir);
 router.get("/", devoirService.getDevoirs);
 
+router.get(
+  "/professeur",
+  professeurAuthenticationMiddleware(),
+  devoirService.getDevoirsParProfesseur
+);
+
 router.get("/:id", devoirService.getDevoir);
 router.delete("/:id", devoirService.deleteDevoir);
 

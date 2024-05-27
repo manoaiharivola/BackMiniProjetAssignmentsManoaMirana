@@ -1,5 +1,9 @@
 let Devoir = require("../model/devoir");
 let DevoirEtudiantService = require("./devoir_etudiant.service");
+let Matiere = require("../model/matiere");
+let mongoose = require("mongoose");
+let ObjectId = mongoose.Types.ObjectId;
+
 // Récupérer tous les devoirs (GET)
 function getDevoirs(req, res) {
   let aggregateQuery = Devoir.aggregate()
@@ -171,10 +175,112 @@ function deleteDevoir(req, res) {
   });
 }
 
+
+// Récupérer les devoirs par professeur connecté (GET)
+function getDevoirsParProfesseur(req, res) {
+  const professeurId = req.professeur._id;
+  const matiereFilter = req.query.matiere_id ? { "matiere._id": ObjectId(req.query.matiere_id) } : {};
+
+  let aggregateQuery = Devoir.aggregate([
+    {
+      $lookup: {
+        from: "matieres",
+        localField: "matiere_id",
+        foreignField: "_id",
+        as: "matiere"
+      }
+    },
+    {
+      $unwind: "$matiere"
+    },
+    {
+      $lookup: {
+        from: "professeurs",
+        localField: "matiere.professeur_id",
+        foreignField: "_id",
+        as: "professeur"
+      }
+    },
+    {
+      $unwind: "$professeur"
+    },
+    {
+      $match: {
+        "professeur._id": ObjectId(professeurId),
+        ...matiereFilter
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        nom: 1,
+        description: 1,
+        dateDeRendu: 1,
+        matiere_id: 1,
+        "matiere._id": 1,
+        "matiere.nom": 1,
+        "matiere.etudiant_inscrits": 1,
+        "matiere.professeur_id": {
+          _id: "$professeur._id",
+          nom: "$professeur.nom",
+          prenom: "$professeur.prenom",
+          mail: "$professeur.mail",
+          professeur_connexion_id: "$professeur.professeur_connexion_id",
+          __v: "$professeur.__v"
+        },
+        __v: "$matiere.__v"
+      }
+    }
+  ]);
+
+  Devoir.aggregatePaginate(
+    aggregateQuery,
+    {
+      page: parseInt(req.query.page) || 1,
+      limit: parseInt(req.query.limit) || 10,
+    },
+    (err, data) => {
+      if (err) {
+        console.error("Erreur lors de la récupération des devoirs :", err);
+        return res.status(500).json({ error: "Erreur serveur" });
+      }
+
+      // Remplacer chaque élément de la liste avec les détails de la matière et du professeur
+      data.docs = data.docs.map((devoir) => {
+        return {
+          _id: devoir._id,
+          nom: devoir.nom,
+          description: devoir.description,
+          dateDeRendu: devoir.dateDeRendu,
+          matiere_id: {
+            _id: devoir.matiere._id,
+            etudiant_inscrits: devoir.matiere.etudiant_inscrits,
+            nom: devoir.matiere.nom,
+            professeur_id: {
+              _id: devoir.matiere.professeur_id._id,
+              nom: devoir.matiere.professeur_id.nom,
+              prenom: devoir.matiere.professeur_id.prenom,
+              mail: devoir.matiere.professeur_id.mail,
+              professeur_connexion_id: devoir.matiere.professeur_id.professeur_connexion_id,
+              __v: devoir.matiere.professeur_id.__v
+            },
+            __v: devoir.matiere.__v
+          },
+          __v: devoir.__v
+        };
+      });
+
+      res.json(data);
+    }
+  );
+}
+
+
 module.exports = {
   getDevoirs,
   postDevoir,
   getDevoir,
   updateDevoir,
   deleteDevoir,
+  getDevoirsParProfesseur,
 };
