@@ -6,11 +6,9 @@ async function creerDevoirsEtudiants(devoirId, matiereId, session) {
   try {
     const matiere = await Matiere.findById(matiereId).session(session);
     if (!matiere) {
-      throw new Error(
-        "La matière avec l'ID",
-        matiereId,
-        "n'a pas été trouvée."
-      );
+      let errorString =
+        "La matière avec l'ID " + matiereId + " n'a pas été trouvée.";
+      throw new Error(errorString);
     }
 
     const etudiantsIds = matiere.etudiant_inscrits;

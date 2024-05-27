@@ -128,13 +128,13 @@ async function postDevoir(req, res) {
       );
       await session.abortTransaction();
       session.endSession();
-      res.status(500).json({ error: "Erreur serveur" });
+      res.status(500).json({ error: "Erreur serveur :" + error });
     }
   } catch (error) {
     console.error("Erreur lors de l'ajout du devoir :", error);
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ error: "Erreur serveur" });
+    res.status(500).json({ error: "Erreur serveur :" + error });
   }
 }
 
