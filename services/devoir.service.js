@@ -35,7 +35,6 @@ function getDevoirs(req, res) {
           nom: devoir.nom,
           description: devoir.description,
           dateDeRendu: devoir.dateDeRendu,
-          rendu: devoir.rendu,
           matiere_id: {
             _id: devoir.matiere[0]._id,
             etudiant_inscrits: devoir.matiere[0].etudiant_inscrits,
@@ -89,7 +88,6 @@ async function postDevoir(req, res) {
       nom: req.body.nom,
       description: req.body.description,
       dateDeRendu: req.body.dateDeRendu,
-      rendu: req.body.rendu,
       matiere_id: req.body.matiere_id,
     });
 
