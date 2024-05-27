@@ -6,7 +6,6 @@ let DevoirSchema = Schema({
   dateDeRendu: Date,
   nom: String,
   description: String,
-  rendu: Boolean,
   matiere_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "matieres",
