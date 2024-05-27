@@ -1,4 +1,5 @@
 let Devoir = require("../model/devoir");
+let DevoirEtudiantService = require("./devoir_etudiant.service");
 // Récupérer tous les devoirs (GET)
 function getDevoirs(req, res) {
   let aggregateQuery = Devoir.aggregate()
@@ -79,37 +80,62 @@ function getDevoir(req, res) {
     });
 }
 
-function postDevoir(req, res) {
-  const { nom, description, dateDeRendu, rendu, matiere_id } = req.body;
+async function postDevoir(req, res) {
+  const session = await Devoir.startSession();
+  session.startTransaction();
 
-  Devoir.findOne({ nom: nom }, (err, existingDevoir) => {
-    if (err) {
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
-
-    if (existingDevoir) {
-      return res
-        .status(400)
-        .json({ error: "Un devoir avec ce nom existe déjà" });
-    }
-
-    let devoir = new Devoir();
-    devoir.nom = nom;
-    devoir.description = description;
-    devoir.dateDeRendu = dateDeRendu;
-    devoir.rendu = rendu;
-    devoir.matiere_id = matiere_id;
+  try {
+    let devoir = new Devoir({
+      nom: req.body.nom,
+      description: req.body.description,
+      dateDeRendu: req.body.dateDeRendu,
+      rendu: req.body.rendu,
+      matiere_id: req.body.matiere_id,
+    });
 
     console.log("POST devoir reçu :");
     console.log(devoir);
-    devoir.save((err) => {
-      if (err) {
-        console.error("Erreur lors de l'ajout du devoir :", err);
-        return res.status(500).json({ error: "Erreur serveur" });
-      }
-      res.json({ message: `${devoir.nom} enregistré!` });
-    });
-  });
+
+    const existingDevoir = await Devoir.findOne({ nom: req.body.nom }).session(
+      session
+    );
+    if (existingDevoir) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json({ error: "Un devoir avec ce nom existe déjà." });
+    }
+
+    const savedDevoir = await devoir.save({ session });
+
+    try {
+      const response = await DevoirEtudiantService.creerDevoirsEtudiants(
+        savedDevoir._id,
+        savedDevoir.matiere_id,
+        session
+      );
+      await session.commitTransaction();
+      session.endSession();
+      res.json({
+        message: `${savedDevoir.nom} enregistré et distribué aux étudiants!`,
+        response,
+      });
+    } catch (error) {
+      console.error(
+        "Erreur lors de la distribution du devoir aux étudiants :",
+        error
+      );
+      await session.abortTransaction();
+      session.endSession();
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du devoir :", error);
+    await session.abortTransaction();
+    session.endSession();
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 }
 
 // Update d'un devoir (PUT)
