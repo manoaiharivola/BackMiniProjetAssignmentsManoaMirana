@@ -11,7 +11,7 @@ const DevoirEtudiantSchema = new mongoose.Schema({
     ref: "etudiants",
     required: true,
   },
-  note: { type: Number, default: 0 },
+  note: { type: Number, default: null },
   remarques_note: { type: String, default: "" },
   rendu: { type: Boolean, default: false },
 });

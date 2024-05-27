@@ -16,7 +16,7 @@ async function creerDevoirsEtudiants(devoirId, matiereId, session) {
     const devoirsEtudiants = etudiantsIds.map((etudiantId) => ({
       devoir_id: devoirId,
       etudiant_id: etudiantId,
-      note: 0,
+      note: null,
       remarques_note: "",
       rendu: false,
     }));
