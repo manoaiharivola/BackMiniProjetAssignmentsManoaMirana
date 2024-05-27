@@ -79,24 +79,36 @@ function getDevoir(req, res) {
     });
 }
 
-// Ajout d'un devoir (POST)
 function postDevoir(req, res) {
-  let devoir = new Devoir();
-  devoir.nom = req.body.nom;
-  devoir.description = req.body.description;
-  devoir.dateDeRendu = req.body.dateDeRendu;
-  devoir.rendu = req.body.rendu;
-  devoir.matiere_id = req.body.matiere_id;
+  const { nom, description, dateDeRendu, rendu, matiere_id } = req.body;
 
-  console.log("POST devoir reçu :");
-  console.log(devoir);
-
-  devoir.save((err) => {
+  Devoir.findOne({ nom: nom }, (err, existingDevoir) => {
     if (err) {
-      console.error("Erreur lors de l'ajout du devoir :", err);
       return res.status(500).json({ error: "Erreur serveur" });
     }
-    res.json({ message: `${devoir.nom} enregistré!` });
+
+    if (existingDevoir) {
+      return res
+        .status(400)
+        .json({ error: "Un devoir avec ce nom existe déjà" });
+    }
+
+    let devoir = new Devoir();
+    devoir.nom = nom;
+    devoir.description = description;
+    devoir.dateDeRendu = dateDeRendu;
+    devoir.rendu = rendu;
+    devoir.matiere_id = matiere_id;
+
+    console.log("POST devoir reçu :");
+    console.log(devoir);
+    devoir.save((err) => {
+      if (err) {
+        console.error("Erreur lors de l'ajout du devoir :", err);
+        return res.status(500).json({ error: "Erreur serveur" });
+      }
+      res.json({ message: `${devoir.nom} enregistré!` });
+    });
   });
 }
 
