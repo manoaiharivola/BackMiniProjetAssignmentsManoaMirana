@@ -13,6 +13,7 @@ const DevoirEtudiantSchema = new mongoose.Schema({
   },
   note: { type: Number, default: 0 },
   remarques_note: { type: String, default: "" },
+  rendu: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("devoir_etudiant", DevoirEtudiantSchema);

@@ -18,6 +18,7 @@ async function creerDevoirsEtudiants(devoirId, matiereId, session) {
       etudiant_id: etudiantId,
       note: 0,
       remarques_note: "",
+      rendu: false,
     }));
 
     await DevoirEtudiant.insertMany(devoirsEtudiants, { session });
