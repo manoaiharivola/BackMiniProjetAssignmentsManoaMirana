@@ -281,52 +281,118 @@ function getDevoirsParProfesseur(req, res) {
   );
 }
 
-// Récupérer les devoirs rendus par les étudiants (GET)
-async function getDevoirsRendusParEtudiants(req, res) {
+// Récupérer les devoirs non notés par les étudiants (GET)
+async function getDevoirsNonNotes(req, res) {
   try {
     const devoirId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    // Rechercher les devoirs étudiants où rendu est vrai
-    const devoirsEtudiants = await DevoirEtudiant.find({ devoir_id: ObjectId(devoirId), dateLivraison: { $ne: null } }).populate('etudiant_id');
+    const totalDocs = await DevoirEtudiant.countDocuments({ devoir_id: ObjectId(devoirId), note: null, dateLivraison: { $ne: null } });
+    const totalPages = Math.ceil(totalDocs / limit);
+    const pagingCounter = (page - 1) * limit + 1;
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
 
-    const nonNotes = [];
-    const notes = [];
+    const devoirsEtudiants = await DevoirEtudiant.find({ devoir_id: ObjectId(devoirId), note: null, dateLivraison: { $ne: null } })
+      .populate('etudiant_id')
+      .skip(skip)
+      .limit(limit);
 
-    devoirsEtudiants.forEach((devoirEtudiant) => {
-      const etudiantInfo = {
-        _id: devoirEtudiant.etudiant_id._id,
-        nom: devoirEtudiant.etudiant_id.nom,
-        prenom: devoirEtudiant.etudiant_id.prenom,
-        mail: devoirEtudiant.etudiant_id.mail,
-      };
-
-      const result = {
+    const docs = devoirsEtudiants.map((devoirEtudiant) => {
+      return {
         _id: devoirEtudiant._id,
         note: devoirEtudiant.note,
         remarques_note: devoirEtudiant.remarques_note,
         dateLivraison: devoirEtudiant.dateLivraison,
-        dateNotation: devoirEtudiant.dateNotation, 
+        dateNotation: devoirEtudiant.dateNotation,
         devoir_id: devoirEtudiant.devoir_id,
-        etudiant_id: etudiantInfo,
+        etudiant_id: {
+          _id: devoirEtudiant.etudiant_id._id,
+          nom: devoirEtudiant.etudiant_id.nom,
+          prenom: devoirEtudiant.etudiant_id.prenom,
+          mail: devoirEtudiant.etudiant_id.mail,
+        },
       };
-
-      if (devoirEtudiant.note === null) {
-        nonNotes.push(result);
-      } else {
-        notes.push(result);
-      }
     });
 
-    // Trier les résultats
-    nonNotes.sort((a, b) => new Date(a.dateLivraison) - new Date(b.dateLivraison));
-    notes.sort((a, b) => new Date(b.dateNotation) - new Date(a.dateNotation));
-
-    res.status(200).json({ nonNotes, notes });
+    res.status(200).json({
+      docs,
+      totalDocs,
+      limit,
+      page,
+      totalPages,
+      pagingCounter,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    });
   } catch (error) {
-    console.error('Erreur lors de la récupération des devoirs étudiants :', error);
+    console.error('Erreur lors de la récupération des devoirs non notés :', error);
     res.status(500).json({ error: 'Erreur serveur : ' + error });
   }
 }
+
+// Récupérer les devoirs notés par les étudiants (GET)
+async function getDevoirsNotes(req, res) {
+  try {
+    const devoirId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalDocs = await DevoirEtudiant.countDocuments({ devoir_id: ObjectId(devoirId), note: { $ne: null } });
+    const totalPages = Math.ceil(totalDocs / limit);
+    const pagingCounter = (page - 1) * limit + 1;
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    const devoirsEtudiants = await DevoirEtudiant.find({ devoir_id: ObjectId(devoirId), note: { $ne: null } })
+      .populate('etudiant_id')
+      .skip(skip)
+      .limit(limit);
+
+    const docs = devoirsEtudiants.map((devoirEtudiant) => {
+      return {
+        _id: devoirEtudiant._id,
+        note: devoirEtudiant.note,
+        remarques_note: devoirEtudiant.remarques_note,
+        dateLivraison: devoirEtudiant.dateLivraison,
+        dateNotation: devoirEtudiant.dateNotation,
+        devoir_id: devoirEtudiant.devoir_id,
+        etudiant_id: {
+          _id: devoirEtudiant.etudiant_id._id,
+          nom: devoirEtudiant.etudiant_id.nom,
+          prenom: devoirEtudiant.etudiant_id.prenom,
+          mail: devoirEtudiant.etudiant_id.mail,
+        },
+      };
+    });
+
+    res.status(200).json({
+      docs,
+      totalDocs,
+      limit,
+      page,
+      totalPages,
+      pagingCounter,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des devoirs notés :', error);
+    res.status(500).json({ error: 'Erreur serveur : ' + error });
+  }
+}
+
 
 async function noterDevoir(req, res) {
   try {
@@ -363,6 +429,7 @@ module.exports = {
   updateDevoir,
   deleteDevoir,
   getDevoirsParProfesseur,
-  getDevoirsRendusParEtudiants,
+  getDevoirsNonNotes,
+  getDevoirsNotes,
   noterDevoir,
 };

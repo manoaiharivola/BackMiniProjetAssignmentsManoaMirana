@@ -20,10 +20,9 @@ router.get(
 router.get("/:id", devoirService.getDevoir);
 router.delete("/:id", devoirService.deleteDevoir);
 
-router.get("/:id/etudiants", 
-  professeurAuthenticationMiddleware(),
-  devoirService.getDevoirsRendusParEtudiants
-);
+// Nouvelles routes pour récupérer les devoirs notés et non notés avec pagination
+router.get('/:id/nonnotes', professeurAuthenticationMiddleware(), devoirService.getDevoirsNonNotes);
+router.get('/:id/notes', professeurAuthenticationMiddleware(), devoirService.getDevoirsNotes);
 
 router.put('/:id/noter', 
   professeurAuthenticationMiddleware(), 
