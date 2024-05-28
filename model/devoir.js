@@ -3,6 +3,7 @@ let Schema = mongoose.Schema;
 const mongoosePaginate = require("mongoose-aggregate-paginate-v2");
 
 let DevoirSchema = Schema({
+  dateDeCreation: Date,
   dateDeRendu: Date,
   nom: String,
   description: String,

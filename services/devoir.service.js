@@ -38,6 +38,7 @@ function getDevoirs(req, res) {
           _id: devoir._id,
           nom: devoir.nom,
           description: devoir.description,
+          dateDeCreation: devoir.dateDeCreation,
           dateDeRendu: devoir.dateDeRendu,
           matiere_id: {
             _id: devoir.matiere[0]._id,
@@ -91,6 +92,7 @@ async function postDevoir(req, res) {
     let devoir = new Devoir({
       nom: req.body.nom,
       description: req.body.description,
+      dateDeCreation: new Date(),
       dateDeRendu: req.body.dateDeRendu,
       matiere_id: req.body.matiere_id,
     });
@@ -215,6 +217,7 @@ function getDevoirsParProfesseur(req, res) {
         _id: 1,
         nom: 1,
         description: 1,
+        dateDeCreation: 1,
         dateDeRendu: 1,
         matiere_id: 1,
         "matiere._id": 1,
@@ -251,6 +254,7 @@ function getDevoirsParProfesseur(req, res) {
           _id: devoir._id,
           nom: devoir.nom,
           description: devoir.description,
+          dateDeCreation: devoir.dateDeCreation,
           dateDeRendu: devoir.dateDeRendu,
           matiere_id: {
             _id: devoir.matiere._id,
