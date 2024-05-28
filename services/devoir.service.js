@@ -328,6 +328,33 @@ async function getDevoirsRendusParEtudiants(req, res) {
   }
 }
 
+async function noterDevoir(req, res) {
+  try {
+    const { id } = req.params;
+    const { note, remarques_note } = req.body;
+
+    if (typeof note !== 'number' || note < 0 || note > 20) {
+      return res.status(400).json({ error: 'La note doit être un nombre entre 0 et 20' });
+    }
+
+    const devoirEtudiant = await DevoirEtudiant.findById(id);
+    if (!devoirEtudiant) {
+      return res.status(404).json({ error: 'Devoir étudiant non trouvé' });
+    }
+
+    devoirEtudiant.note = note;
+    devoirEtudiant.remarques_note = remarques_note;
+    devoirEtudiant.dateNotation = new Date();
+
+    await devoirEtudiant.save();
+
+    res.status(200).json({ message: 'Devoir noté avec succès', devoirEtudiant });
+  } catch (error) {
+    console.error('Erreur lors de la notation du devoir étudiant :', error);
+    res.status(500).json({ error: 'Erreur serveur : ' + error });
+  }
+}
+
 
 module.exports = {
   getDevoirs,
@@ -337,4 +364,5 @@ module.exports = {
   deleteDevoir,
   getDevoirsParProfesseur,
   getDevoirsRendusParEtudiants,
+  noterDevoir,
 };

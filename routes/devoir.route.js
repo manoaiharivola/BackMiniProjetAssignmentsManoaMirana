@@ -22,6 +22,13 @@ router.delete("/:id", devoirService.deleteDevoir);
 
 router.get("/:id/etudiants", 
   professeurAuthenticationMiddleware(),
-  devoirService.getDevoirsRendusParEtudiants);
+  devoirService.getDevoirsRendusParEtudiants
+);
+
+router.put('/:id/noter', 
+  professeurAuthenticationMiddleware(), 
+  devoirService.noterDevoir
+);
+
 
 module.exports = router;
