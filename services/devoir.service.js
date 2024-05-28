@@ -3,6 +3,8 @@ let DevoirEtudiantService = require("./devoir_etudiant.service");
 let Matiere = require("../model/matiere");
 let mongoose = require("mongoose");
 let ObjectId = mongoose.Types.ObjectId;
+const DevoirEtudiant = require("../model/devoir_etudiant");
+const Etudiant = require("../model/etudiant");
 
 // Récupérer tous les devoirs (GET)
 function getDevoirs(req, res) {
@@ -279,6 +281,53 @@ function getDevoirsParProfesseur(req, res) {
   );
 }
 
+// Récupérer les devoirs rendus par les étudiants (GET)
+async function getDevoirsRendusParEtudiants(req, res) {
+  try {
+    const devoirId = req.params.id;
+
+    // Rechercher les devoirs étudiants où rendu est vrai
+    const devoirsEtudiants = await DevoirEtudiant.find({ devoir_id: ObjectId(devoirId), dateLivraison: { $ne: null } }).populate('etudiant_id');
+
+    const nonNotes = [];
+    const notes = [];
+
+    devoirsEtudiants.forEach((devoirEtudiant) => {
+      const etudiantInfo = {
+        _id: devoirEtudiant.etudiant_id._id,
+        nom: devoirEtudiant.etudiant_id.nom,
+        prenom: devoirEtudiant.etudiant_id.prenom,
+        mail: devoirEtudiant.etudiant_id.mail,
+      };
+
+      const result = {
+        _id: devoirEtudiant._id,
+        note: devoirEtudiant.note,
+        remarques_note: devoirEtudiant.remarques_note,
+        dateLivraison: devoirEtudiant.dateLivraison,
+        dateNotation: devoirEtudiant.dateNotation, 
+        devoir_id: devoirEtudiant.devoir_id,
+        etudiant_id: etudiantInfo,
+      };
+
+      if (devoirEtudiant.note === null) {
+        nonNotes.push(result);
+      } else {
+        notes.push(result);
+      }
+    });
+
+    // Trier les résultats
+    nonNotes.sort((a, b) => new Date(a.dateLivraison) - new Date(b.dateLivraison));
+    notes.sort((a, b) => new Date(b.dateNotation) - new Date(a.dateNotation));
+
+    res.status(200).json({ nonNotes, notes });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des devoirs étudiants :', error);
+    res.status(500).json({ error: 'Erreur serveur : ' + error });
+  }
+}
+
 
 module.exports = {
   getDevoirs,
@@ -287,4 +336,5 @@ module.exports = {
   updateDevoir,
   deleteDevoir,
   getDevoirsParProfesseur,
+  getDevoirsRendusParEtudiants,
 };
