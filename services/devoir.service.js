@@ -193,19 +193,34 @@ module.exports = {
 };
 
 
-
 // suppression d'un devoir (DELETE)
-function deleteDevoir(req, res) {
-  Devoir.findByIdAndRemove(req.params.id, (err, devoir) => {
-    if (err) {
-      console.error("Erreur lors de la suppression du devoir :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
-    if (!devoir) {
+async function deleteDevoir(req, res) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const devoirId = req.params.id;
+
+    // Supprimer les devoirs des étudiants
+    const resultDevoirEtudiant = await DevoirEtudiant.deleteMany({ devoir_id: devoirId }).session(session);
+    console.log(`Nombre de devoirs des étudiants supprimés : ${resultDevoirEtudiant.deletedCount}`);
+
+    // Supprimer le devoir principal
+    const resultDevoir = await Devoir.findByIdAndRemove(devoirId).session(session);
+    if (!resultDevoir) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: "Devoir non trouvé" });
     }
-    res.json({ message: `${devoir.nom} supprimé` });
-  });
+
+    await session.commitTransaction();
+    session.endSession();
+    res.json({ message: `${resultDevoir.nom} et tous les devoirs associés des étudiants ont été supprimés` });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Erreur lors de la suppression du devoir :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 }
 
 
