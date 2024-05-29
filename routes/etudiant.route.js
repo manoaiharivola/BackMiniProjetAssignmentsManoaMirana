@@ -3,6 +3,11 @@ let router = express.Router();
 let etudiantService = require("../services/etudiant.service");
 let authenticationMiddleware = require("../middlewares/authentication.middleware");
 
-router.get("/:id", authenticationMiddleware(), etudiantService.getEtudiant);
+/* get de l'étudiant connecté*/
+router.get(
+  "/connected",
+  authenticationMiddleware(),
+  etudiantService.getEtudiantConnected
+);
 
 module.exports = router;

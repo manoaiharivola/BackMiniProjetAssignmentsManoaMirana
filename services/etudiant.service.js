@@ -1,8 +1,8 @@
 let Etudiant = require("../model/etudiant");
 
-// Récupérer un etudiant par son id (GET)
-function getEtudiant(req, res) {
-  let etudiantId = req.params.id;
+// Récupérer l'etudiant connecté (GET)
+function getEtudiantConnected(req, res) {
+  let etudiantId = req.etudiant._id;
   Etudiant.findById(etudiantId, (err, etudiant) => {
     if (err) {
       return res.status(500).send({
@@ -18,5 +18,5 @@ function getEtudiant(req, res) {
 }
 
 module.exports = {
-  getEtudiant,
+  getEtudiantConnected,
 };
