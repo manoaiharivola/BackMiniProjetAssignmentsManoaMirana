@@ -145,25 +145,54 @@ async function postDevoir(req, res) {
 }
 
 // Update d'un devoir (PUT)
-function updateDevoir(req, res) {
+async function updateDevoir(req, res) {
   console.log("UPDATE reçu devoir : ");
   console.log(req.body);
-  Devoir.findByIdAndUpdate(
-    req.body._id,
-    req.body,
-    { new: true },
-    (err, devoir) => {
-      if (err) {
-        console.error("Erreur lors de la mise à jour du devoir :", err);
-        return res.status(500).json({ error: "Erreur serveur" });
-      }
-      if (!devoir) {
-        return res.status(404).json({ error: "Devoir non trouvé" });
-      }
-      res.json({ message: "Mise à jour effectuée" });
+
+  const { _id, nom, description, dateDeRendu, matiere_id } = req.body;
+
+  try {
+    // Vérifier si le devoir existe
+    const devoir = await Devoir.findById(_id);
+    if (!devoir) {
+      return res.status(404).json({ error: "Devoir non trouvé" });
     }
-  );
+
+    // Vérifier si le titre existe déjà pour un autre devoir
+    const existingDevoir = await Devoir.findOne({ nom, _id: { $ne: _id } });
+    if (existingDevoir) {
+      return res.status(400).json({ error: "Un devoir avec ce titre existe déjà." });
+    }
+
+    // Vérifier si la date limite est dans le passé
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateRendu = new Date(dateDeRendu);
+    if (dateDeRendu && dateRendu < today) {
+      return res.status(400).json({ error: "La date limite ne peut pas être une date passée." });
+    }
+
+    // Construire l'objet de mise à jour
+    const updateFields = {};
+    if (nom) updateFields.nom = nom;
+    if (description !== undefined) updateFields.description = description; // Si description est explicitement envoyée comme null, undefined, etc.
+    if (dateDeRendu) updateFields.dateDeRendu = dateDeRendu;
+
+    // Mettre à jour le devoir
+    const updatedDevoir = await Devoir.findByIdAndUpdate(_id, updateFields, { new: true });
+    res.json({ message: "Mise à jour effectuée", devoir: updatedDevoir });
+
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du devoir :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 }
+
+module.exports = {
+  updateDevoir
+};
+
+
 
 // suppression d'un devoir (DELETE)
 function deleteDevoir(req, res) {
