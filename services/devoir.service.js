@@ -4,7 +4,7 @@ let Matiere = require("../model/matiere");
 let mongoose = require("mongoose");
 let ObjectId = mongoose.Types.ObjectId;
 const DevoirEtudiant = require("../model/devoir_etudiant");
-const Etudiant = require("../model/etudiant");
+const Professeur = require("../model/professeur");
 
 // Récupérer tous les devoirs (GET)
 function getDevoirs(req, res) {
@@ -489,6 +489,186 @@ async function noterDevoir(req, res) {
   }
 }
 
+
+// Récupérer les devoirs à rendre par un étudiant (GET)
+async function getDevoirsARendre(req, res) {
+  const etudiantId = req.etudiant._id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  try {
+    const aggregateQuery = DevoirEtudiant.aggregate([
+      { $match: { etudiant_id: ObjectId(etudiantId), dateLivraison: null } },
+      {
+        $lookup: {
+          from: 'devoirs',
+          localField: 'devoir_id',
+          foreignField: '_id',
+          as: 'devoir'
+        }
+      },
+      { $unwind: '$devoir' },
+      {
+        $lookup: {
+          from: 'matieres',
+          localField: 'devoir.matiere_id',
+          foreignField: '_id',
+          as: 'matiere'
+        }
+      },
+      { $unwind: '$matiere' },
+      {
+        $lookup: {
+          from: 'professeurs',
+          localField: 'matiere.professeur_id',
+          foreignField: '_id',
+          as: 'professeur'
+        }
+      },
+      { $unwind: '$professeur' },
+      {
+        $project: {
+          _id: 1,
+          note: 1,
+          remarques_note: 1,
+          dateLivraison: 1,
+          dateNotation: 1,
+          devoir_id: {
+            _id: '$devoir._id',
+            nom: '$devoir.nom',
+            description: '$devoir.description',
+            dateDeCreation: '$devoir.dateDeCreation',
+            dateDeRendu: '$devoir.dateDeRendu',
+            matiere_id: {
+              _id: '$matiere._id',
+              nom: '$matiere.nom',
+              photo: '$matiere.photo',
+              professeur_id: {
+                _id: '$professeur._id',
+                nom: '$professeur.nom',
+                prenom: '$professeur.prenom',
+                mail: '$professeur.mail'
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    const options = { page, limit };
+    DevoirEtudiant.aggregatePaginate(aggregateQuery, options, (err, results) => {
+      if (err) {
+        console.error('Erreur lors de la récupération des devoirs à rendre:', err);
+        return res.status(500).json({ error: 'Erreur serveur' });
+      }
+
+      results.docs.sort((a, b) => {
+        const aEnRetard = new Date(a.devoir_id.dateDeRendu) < new Date();
+        const bEnRetard = new Date(b.devoir_id.dateDeRendu) < new Date();
+
+        if (aEnRetard && !bEnRetard) return -1;
+        if (!aEnRetard && bEnRetard) return 1;
+        if (new Date(a.devoir_id.dateDeRendu) < new Date(b.devoir_id.dateDeRendu)) return -1;
+        if (new Date(a.devoir_id.dateDeRendu) > new Date(b.devoir_id.dateDeRendu)) return 1;
+        return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
+      });
+
+      res.json(results);
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des devoirs à rendre:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+// Récupérer les devoirs rendus par un étudiant (GET)
+async function getDevoirsRendus(req, res) {
+  const etudiantId = req.etudiant._id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  try {
+    const aggregateQuery = DevoirEtudiant.aggregate([
+      { $match: { etudiant_id: ObjectId(etudiantId), dateLivraison: { $ne: null } } },
+      {
+        $lookup: {
+          from: 'devoirs',
+          localField: 'devoir_id',
+          foreignField: '_id',
+          as: 'devoir'
+        }
+      },
+      { $unwind: '$devoir' },
+      {
+        $lookup: {
+          from: 'matieres',
+          localField: 'devoir.matiere_id',
+          foreignField: '_id',
+          as: 'matiere'
+        }
+      },
+      { $unwind: '$matiere' },
+      {
+        $lookup: {
+          from: 'professeurs',
+          localField: 'matiere.professeur_id',
+          foreignField: '_id',
+          as: 'professeur'
+        }
+      },
+      { $unwind: '$professeur' },
+      {
+        $project: {
+          _id: 1,
+          note: 1,
+          remarques_note: 1,
+          dateLivraison: 1,
+          dateNotation: 1,
+          devoir_id: {
+            _id: '$devoir._id',
+            nom: '$devoir.nom',
+            description: '$devoir.description',
+            dateDeCreation: '$devoir.dateDeCreation',
+            dateDeRendu: '$devoir.dateDeRendu',
+            matiere_id: {
+              _id: '$matiere._id',
+              nom: '$matiere.nom',
+              photo: '$matiere.photo',
+              professeur_id: {
+                _id: '$professeur._id',
+                nom: '$professeur.nom',
+                prenom: '$professeur.prenom',
+                mail: '$professeur.mail'
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    const options = { page, limit };
+    DevoirEtudiant.aggregatePaginate(aggregateQuery, options, (err, results) => {
+      if (err) {
+        console.error('Erreur lors de la récupération des devoirs rendus:', err);
+        return res.status(500).json({ error: 'Erreur serveur' });
+      }
+
+      results.docs.sort((a, b) => {
+        if (a.note === null && b.note !== null) return -1;
+        if (a.note !== null && b.note === null) return 1;
+        if (new Date(a.dateLivraison) > new Date(b.dateLivraison)) return -1;
+        if (new Date(a.dateLivraison) < new Date(b.dateLivraison)) return 1;
+        return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
+      });
+
+      res.json(results);
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des devoirs rendus:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
 module.exports = {
   getDevoirs,
   postDevoir,
@@ -499,4 +679,7 @@ module.exports = {
   getDevoirsNonNotes,
   getDevoirsNotes,
   noterDevoir,
+  getDevoirsARendre,
+  getDevoirsRendus
 };
+

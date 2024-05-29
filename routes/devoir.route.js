@@ -2,6 +2,7 @@ let express = require("express");
 let router = express.Router();
 let devoirService = require("../services/devoir.service");
 let professeurAuthenticationMiddleware = require("../middlewares/professeur_authentication.middleware");
+let authenticationMiddleware = require("../middlewares/authentication.middleware");
 
 router.post(
   "/",
@@ -16,6 +17,10 @@ router.get(
   professeurAuthenticationMiddleware(),
   devoirService.getDevoirsParProfesseur
 );
+
+router.get('/etudiant/a-rendre', authenticationMiddleware(),devoirService.getDevoirsARendre);
+
+router.get('/etudiant/rendus', authenticationMiddleware(),devoirService.getDevoirsRendus);
 
 router.get("/:id", devoirService.getDevoir);
 router.delete("/:id", devoirService.deleteDevoir);
