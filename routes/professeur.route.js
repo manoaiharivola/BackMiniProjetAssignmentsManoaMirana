@@ -4,9 +4,9 @@ let professeurService = require("../services/professeur.service");
 let professeurAuthenticationMiddleware = require("../middlewares/professeur_authentication.middleware");
 
 router.get(
-  "/:id",
+  "/connected",
   professeurAuthenticationMiddleware(),
-  professeurService.getProfesseur
+  professeurService.getProfesseurConnected
 );
 
 module.exports = router;

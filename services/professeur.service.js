@@ -1,8 +1,8 @@
 let Professeur = require("../model/professeur");
 
-// Récupérer un professeur par son id (GET)
-function getProfesseur(req, res) {
-  let professeurId = req.params.id;
+// Récupérer l'professeur connecté (GET)
+function getProfesseurConnected(req, res) {
+  let professeurId = req.professeur._id;
   Professeur.findById(professeurId, (err, professeur) => {
     if (err) {
       return res.status(500).send({
@@ -18,5 +18,5 @@ function getProfesseur(req, res) {
 }
 
 module.exports = {
-  getProfesseur,
+  getProfesseurConnected,
 };
