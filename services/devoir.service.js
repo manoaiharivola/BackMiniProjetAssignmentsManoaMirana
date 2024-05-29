@@ -789,6 +789,32 @@ async function getDevoirDetailsPourProfesseur(req, res) {
   }
 }
 
+// Livrer un devoir (PUT)
+async function rendreDevoir(req, res) {
+  const etudiantId = req.etudiant._id;
+  const devoirEtudiantId = req.params.id;
+
+  try {
+    const devoirEtudiant = await DevoirEtudiant.findOne({ _id: ObjectId(devoirEtudiantId), etudiant_id: ObjectId(etudiantId) });
+
+    if (!devoirEtudiant) {
+      return res.status(404).json({ error: 'Devoir non trouvé pour cet étudiant' });
+    }
+
+    if (devoirEtudiant.dateLivraison) {
+      return res.status(400).json({ error: 'Ce devoir a déjà été rendu' });
+    }
+
+    devoirEtudiant.dateLivraison = new Date();
+    await devoirEtudiant.save();
+
+    res.status(200).json({ message: 'Devoir rendu avec succès', devoirEtudiant });
+  } catch (error) {
+    console.error('Erreur lors de la remise du devoir:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
 module.exports = {
   getDevoirs,
   postDevoir,
@@ -802,6 +828,7 @@ module.exports = {
   getDevoirsARendre,
   getDevoirsRendus,
   getDevoirDetailsPourEtudiant,
-  getDevoirDetailsPourProfesseur
+  getDevoirDetailsPourProfesseur,
+  rendreDevoir
 };
 

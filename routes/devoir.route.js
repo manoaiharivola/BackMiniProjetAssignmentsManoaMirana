@@ -18,12 +18,12 @@ router.get(
   devoirService.getDevoirsParProfesseur
 );
 
-router.get('/etudiant/a-rendre', authenticationMiddleware(),devoirService.getDevoirsARendre);
+router.get('/etudiant/a-rendre', authenticationMiddleware(), devoirService.getDevoirsARendre);
 
-router.get('/etudiant/rendus', authenticationMiddleware(),devoirService.getDevoirsRendus);
+router.get('/etudiant/rendus', authenticationMiddleware(), devoirService.getDevoirsRendus);
 
+router.put('/devoir-etudiant/:id/rendre', authenticationMiddleware(), devoirService.rendreDevoir);
 router.get('/devoir-etudiant/:id', authenticationMiddleware(), devoirService.getDevoirDetailsPourEtudiant);
-
 router.get('/prof-devoir-etudiant/:id', professeurAuthenticationMiddleware(), devoirService.getDevoirDetailsPourProfesseur);
 
 router.get("/:id", devoirService.getDevoir);
