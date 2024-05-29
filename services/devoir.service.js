@@ -645,6 +645,63 @@ async function getDevoirsRendus(req, res) {
   }
 }
 
+// Récupérer les détails d'un devoir pour un étudiant (GET)
+async function getDevoirDetailsPourEtudiant(req, res) {
+  const etudiantId = req.etudiant._id;
+  const devoirEtudiantId = req.params.id;
+
+  
+  try {
+    const devoirEtudiant = await DevoirEtudiant.findOne({ _id: ObjectId(devoirEtudiantId), etudiant_id: ObjectId(etudiantId) })
+      .populate({
+        path: 'devoir_id',
+        populate: {
+          path: 'matiere_id',
+          populate: {
+            path: 'professeur_id',
+            select: 'nom prenom mail'
+          },
+          select: 'nom photo professeur_id'
+        }
+      });
+
+    if (!devoirEtudiant) {
+      return res.status(404).json({ error: 'Devoir non trouvé pour cet étudiant' });
+    }
+
+    const result = {
+      _id: devoirEtudiant._id,
+      note: devoirEtudiant.note,
+      remarques_note: devoirEtudiant.remarques_note,
+      dateLivraison: devoirEtudiant.dateLivraison,
+      dateNotation: devoirEtudiant.dateNotation,
+      devoir_id: {
+        _id: devoirEtudiant.devoir_id._id,
+        nom: devoirEtudiant.devoir_id.nom,
+        description: devoirEtudiant.devoir_id.description,
+        dateDeCreation: devoirEtudiant.devoir_id.dateDeCreation,
+        dateDeRendu: devoirEtudiant.devoir_id.dateDeRendu,
+        matiere_id: {
+          _id: devoirEtudiant.devoir_id.matiere_id._id,
+          nom: devoirEtudiant.devoir_id.matiere_id.nom,
+          photo: devoirEtudiant.devoir_id.matiere_id.photo,
+          professeur_id: {
+            _id: devoirEtudiant.devoir_id.matiere_id.professeur_id._id,
+            nom: devoirEtudiant.devoir_id.matiere_id.professeur_id.nom,
+            prenom: devoirEtudiant.devoir_id.matiere_id.professeur_id.prenom,
+            mail: devoirEtudiant.devoir_id.matiere_id.professeur_id.mail,
+          }
+        }
+      }
+    };
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des détails du devoir pour un étudiant:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
 module.exports = {
   getDevoirs,
   postDevoir,
@@ -656,5 +713,6 @@ module.exports = {
   getDevoirsNotes,
   noterDevoir,
   getDevoirsARendre,
-  getDevoirsRendus
+  getDevoirsRendus,
+  getDevoirDetailsPourEtudiant,
 };
