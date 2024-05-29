@@ -702,6 +702,69 @@ async function getDevoirDetailsPourEtudiant(req, res) {
   }
 }
 
+// Récupérer les détails d'un devoir pour un professeur (GET)
+async function getDevoirDetailsPourProfesseur(req, res) {
+  const devoirEtudiantId = req.params.id;
+
+  try {
+    const devoirEtudiant = await DevoirEtudiant.findOne({ _id: ObjectId(devoirEtudiantId) })
+      .populate({
+        path: 'devoir_id',
+        populate: {
+          path: 'matiere_id',
+          populate: {
+            path: 'professeur_id',
+            select: 'nom prenom mail'
+          },
+          select: 'nom photo'
+        }
+      })
+      .populate('etudiant_id', 'nom prenom mail');
+
+    if (!devoirEtudiant) {
+      return res.status(404).json({ error: 'Devoir non trouvé pour ce professeur' });
+    }
+
+    const result = {
+      _id: devoirEtudiant._id,
+      note: devoirEtudiant.note,
+      remarques_note: devoirEtudiant.remarques_note,
+      dateLivraison: devoirEtudiant.dateLivraison,
+      dateNotation: devoirEtudiant.dateNotation,
+      devoir_id: {
+        _id: devoirEtudiant.devoir_id._id,
+        nom: devoirEtudiant.devoir_id.nom,
+        description: devoirEtudiant.devoir_id.description,
+        dateDeCreation: devoirEtudiant.devoir_id.dateDeCreation,
+        dateDeRendu: devoirEtudiant.devoir_id.dateDeRendu,
+        matiere_id: {
+          _id: devoirEtudiant.devoir_id.matiere_id._id,
+          nom: devoirEtudiant.devoir_id.matiere_id.nom,
+          photo: devoirEtudiant.devoir_id.matiere_id.photo,
+          professeur_id: {
+            _id: devoirEtudiant.devoir_id.matiere_id.professeur_id._id,
+            nom: devoirEtudiant.devoir_id.matiere_id.professeur_id.nom,
+            prenom: devoirEtudiant.devoir_id.matiere_id.professeur_id.prenom,
+            mail: devoirEtudiant.devoir_id.matiere_id.professeur_id.mail,
+            professeur_connexion_id: devoirEtudiant.devoir_id.matiere_id.professeur_id.professeur_connexion_id
+          }
+        }
+      },
+      etudiant_id: {
+        _id: devoirEtudiant.etudiant_id._id,
+        nom: devoirEtudiant.etudiant_id.nom,
+        prenom: devoirEtudiant.etudiant_id.prenom,
+        mail: devoirEtudiant.etudiant_id.mail
+      }
+    };
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des détails du devoir pour un professeur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
 module.exports = {
   getDevoirs,
   postDevoir,
@@ -715,4 +778,5 @@ module.exports = {
   getDevoirsARendre,
   getDevoirsRendus,
   getDevoirDetailsPourEtudiant,
+  getDevoirDetailsPourProfesseur
 };
