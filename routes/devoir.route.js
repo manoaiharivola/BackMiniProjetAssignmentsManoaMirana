@@ -22,6 +22,10 @@ router.get('/etudiant/a-rendre', authenticationMiddleware(),devoirService.getDev
 
 router.get('/etudiant/rendus', authenticationMiddleware(),devoirService.getDevoirsRendus);
 
+router.get('/devoir-etudiant/:id', authenticationMiddleware(), devoirService.getDevoirDetailsPourEtudiant);
+
+router.get('/prof-devoir-etudiant/:id', professeurAuthenticationMiddleware(), devoirService.getDevoirDetailsPourProfesseur);
+
 router.get("/:id", devoirService.getDevoir);
 router.delete("/:id", devoirService.deleteDevoir);
 
