@@ -223,11 +223,12 @@ async function deleteDevoir(req, res) {
   }
 }
 
-
 // Récupérer les devoirs par professeur connecté (GET)
 function getDevoirsParProfesseur(req, res) {
   const professeurId = req.professeur._id;
-  const matiereFilter = req.query.matiere_id ? { "matiere._id": ObjectId(req.query.matiere_id) } : {};
+  const matiereFilter = req.query.matiere_id
+    ? { "matiere._id": ObjectId(req.query.matiere_id) }
+    : {};
 
   let aggregateQuery = Devoir.aggregate([
     {
@@ -235,28 +236,28 @@ function getDevoirsParProfesseur(req, res) {
         from: "matieres",
         localField: "matiere_id",
         foreignField: "_id",
-        as: "matiere"
-      }
+        as: "matiere",
+      },
     },
     {
-      $unwind: "$matiere"
+      $unwind: "$matiere",
     },
     {
       $lookup: {
         from: "professeurs",
         localField: "matiere.professeur_id",
         foreignField: "_id",
-        as: "professeur"
-      }
+        as: "professeur",
+      },
     },
     {
-      $unwind: "$professeur"
+      $unwind: "$professeur",
     },
     {
       $match: {
         "professeur._id": ObjectId(professeurId),
-        ...matiereFilter
-      }
+        ...matiereFilter,
+      },
     },
     {
       $project: {
@@ -275,11 +276,11 @@ function getDevoirsParProfesseur(req, res) {
           prenom: "$professeur.prenom",
           mail: "$professeur.mail",
           professeur_connexion_id: "$professeur.professeur_connexion_id",
-          __v: "$professeur.__v"
+          __v: "$professeur.__v",
         },
-        __v: "$matiere.__v"
-      }
-    }
+        __v: "$matiere.__v",
+      },
+    },
   ]);
 
   Devoir.aggregatePaginate(
@@ -311,12 +312,13 @@ function getDevoirsParProfesseur(req, res) {
               nom: devoir.matiere.professeur_id.nom,
               prenom: devoir.matiere.professeur_id.prenom,
               mail: devoir.matiere.professeur_id.mail,
-              professeur_connexion_id: devoir.matiere.professeur_id.professeur_connexion_id,
-              __v: devoir.matiere.professeur_id.__v
+              professeur_connexion_id:
+                devoir.matiere.professeur_id.professeur_connexion_id,
+              __v: devoir.matiere.professeur_id.__v,
             },
-            __v: devoir.matiere.__v
+            __v: devoir.matiere.__v,
           },
-          __v: devoir.__v
+          __v: devoir.__v,
         };
       });
 
@@ -333,7 +335,11 @@ async function getDevoirsNonNotes(req, res) {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const totalDocs = await DevoirEtudiant.countDocuments({ devoir_id: ObjectId(devoirId), note: null, dateLivraison: { $ne: null } });
+    const totalDocs = await DevoirEtudiant.countDocuments({
+      devoir_id: ObjectId(devoirId),
+      note: null,
+      dateLivraison: { $ne: null },
+    });
     const totalPages = Math.ceil(totalDocs / limit);
     const pagingCounter = (page - 1) * limit + 1;
     const hasPrevPage = page > 1;
@@ -341,8 +347,13 @@ async function getDevoirsNonNotes(req, res) {
     const prevPage = hasPrevPage ? page - 1 : null;
     const nextPage = hasNextPage ? page + 1 : null;
 
-    const devoirsEtudiants = await DevoirEtudiant.find({ devoir_id: ObjectId(devoirId), note: null, dateLivraison: { $ne: null } })
-      .populate('etudiant_id')
+    const devoirsEtudiants = await DevoirEtudiant.find({
+      devoir_id: ObjectId(devoirId),
+      note: null,
+      dateLivraison: { $ne: null },
+    })
+      .populate("etudiant_id")
+      .sort({ dateLivraison: 1 })
       .skip(skip)
       .limit(limit);
 
@@ -376,8 +387,11 @@ async function getDevoirsNonNotes(req, res) {
       nextPage,
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération des devoirs non notés :', error);
-    res.status(500).json({ error: 'Erreur serveur : ' + error });
+    console.error(
+      "Erreur lors de la récupération des devoirs non notés :",
+      error
+    );
+    res.status(500).json({ error: "Erreur serveur : " + error });
   }
 }
 
@@ -389,7 +403,10 @@ async function getDevoirsNotes(req, res) {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const totalDocs = await DevoirEtudiant.countDocuments({ devoir_id: ObjectId(devoirId), note: { $ne: null } });
+    const totalDocs = await DevoirEtudiant.countDocuments({
+      devoir_id: ObjectId(devoirId),
+      note: { $ne: null },
+    });
     const totalPages = Math.ceil(totalDocs / limit);
     const pagingCounter = (page - 1) * limit + 1;
     const hasPrevPage = page > 1;
@@ -397,8 +414,12 @@ async function getDevoirsNotes(req, res) {
     const prevPage = hasPrevPage ? page - 1 : null;
     const nextPage = hasNextPage ? page + 1 : null;
 
-    const devoirsEtudiants = await DevoirEtudiant.find({ devoir_id: ObjectId(devoirId), note: { $ne: null } })
-      .populate('etudiant_id')
+    const devoirsEtudiants = await DevoirEtudiant.find({
+      devoir_id: ObjectId(devoirId),
+      note: { $ne: null },
+    })
+      .populate("etudiant_id")
+      .sort({ dateNotation: -1 })
       .skip(skip)
       .limit(limit);
 
@@ -432,24 +453,25 @@ async function getDevoirsNotes(req, res) {
       nextPage,
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération des devoirs notés :', error);
-    res.status(500).json({ error: 'Erreur serveur : ' + error });
+    console.error("Erreur lors de la récupération des devoirs notés :", error);
+    res.status(500).json({ error: "Erreur serveur : " + error });
   }
 }
-
 
 async function noterDevoir(req, res) {
   try {
     const { id } = req.params;
     const { note, remarques_note } = req.body;
 
-    if (typeof note !== 'number' || note < 0 || note > 20) {
-      return res.status(400).json({ error: 'La note doit être un nombre entre 0 et 20' });
+    if (typeof note !== "number" || note < 0 || note > 20) {
+      return res
+        .status(400)
+        .json({ error: "La note doit être un nombre entre 0 et 20" });
     }
 
     const devoirEtudiant = await DevoirEtudiant.findById(id);
     if (!devoirEtudiant) {
-      return res.status(404).json({ error: 'Devoir étudiant non trouvé' });
+      return res.status(404).json({ error: "Devoir étudiant non trouvé" });
     }
 
     devoirEtudiant.note = note;
@@ -458,13 +480,14 @@ async function noterDevoir(req, res) {
 
     await devoirEtudiant.save();
 
-    res.status(200).json({ message: 'Devoir noté avec succès', devoirEtudiant });
+    res
+      .status(200)
+      .json({ message: "Devoir noté avec succès", devoirEtudiant });
   } catch (error) {
-    console.error('Erreur lors de la notation du devoir étudiant :', error);
-    res.status(500).json({ error: 'Erreur serveur : ' + error });
+    console.error("Erreur lors de la notation du devoir étudiant :", error);
+    res.status(500).json({ error: "Erreur serveur : " + error });
   }
 }
-
 
 module.exports = {
   getDevoirs,
