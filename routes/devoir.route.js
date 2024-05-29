@@ -20,6 +20,8 @@ router.get(
 
 router.get('/etudiant/a-rendre', authenticationMiddleware(),devoirService.getDevoirsARendre);
 
+router.get('/etudiant/rendus', authenticationMiddleware(),devoirService.getDevoirsRendus);
+
 router.get("/:id", devoirService.getDevoir);
 router.delete("/:id", devoirService.deleteDevoir);
 
