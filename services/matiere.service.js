@@ -69,6 +69,10 @@ function getMatiere(req, res) {
 
 // Ajout d'un matiere (POST)
 function postMatiere(req, res) {
+  let matiere = new Matiere();
+  if(req.file){
+    matiere.photo = req.file.path;
+  }
   Matiere.findOne({ nom: req.body.nom }, (err, existingMatiere) => {
     if (err) {
       return res.status(500).send({
@@ -82,7 +86,6 @@ function postMatiere(req, res) {
         .send({ message: "Le nom de la matière existe déjà" });
     }
 
-    let matiere = new Matiere();
     matiere.nom = req.body.nom;
     matiere.professeur_id = req.professeur._id;
     matiere.etudiant_inscrits = [];
