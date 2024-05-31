@@ -2,6 +2,7 @@ let express = require("express");
 let router = express.Router();
 let etudiantService = require("../services/etudiant.service");
 let authenticationMiddleware = require("../middlewares/authentication.middleware");
+let professeurAuthenticationMiddleware = require("../middlewares/professeur_authentication.middleware");
 
 /* get de l'étudiant connecté*/
 router.get(
@@ -9,5 +10,7 @@ router.get(
   authenticationMiddleware(),
   etudiantService.getEtudiantConnected
 );
+
+router.get('/', professeurAuthenticationMiddleware(), etudiantService.getListeEtudiants);
 
 module.exports = router;
