@@ -11,6 +11,6 @@ router.get(
   etudiantService.getEtudiantConnected
 );
 
-router.get('/liste', professeurAuthenticationMiddleware(), etudiantService.getListeEtudiants);
+router.get('/', professeurAuthenticationMiddleware(), etudiantService.getListeEtudiants);
 
 module.exports = router;

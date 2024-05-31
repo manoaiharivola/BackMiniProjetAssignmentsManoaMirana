@@ -9,4 +9,6 @@ router.get(
   professeurService.getProfesseurConnected
 );
 
+router.get('/', professeurAuthenticationMiddleware(), professeurService.getListeProfesseurs);
+
 module.exports = router;
