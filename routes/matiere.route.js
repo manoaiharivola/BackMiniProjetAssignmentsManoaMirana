@@ -2,10 +2,12 @@ let express = require("express");
 let router = express.Router();
 let matiereService = require("../services/matiere.service");
 let professeurAuthenticationMiddleware = require("../middlewares/professeur_authentication.middleware");
+let upload = require("../middlewares/upload_file.middleware");
 
 router.post(
   "/",
   professeurAuthenticationMiddleware(),
+  upload.single('matiere_image'),
   matiereService.postMatiere
 );
 router.put(

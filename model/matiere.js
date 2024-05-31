@@ -4,6 +4,7 @@ const mongoosePaginate = require("mongoose-aggregate-paginate-v2");
 
 let MatiereSchema = Schema({
   nom: String,
+  photo: String,
   professeur_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "professeurs",
