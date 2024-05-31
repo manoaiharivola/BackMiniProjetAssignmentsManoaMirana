@@ -10,6 +10,9 @@ const authenticationService = {
 
 function inscription(req, res) {
   let etudiant = new Etudiant();
+  if (req.file) {
+    etudiant.photo = req.file.path;
+  }
   etudiant.nom = req.body.nom;
   etudiant.prenom = req.body.prenom;
   etudiant.mail = req.body.mail;

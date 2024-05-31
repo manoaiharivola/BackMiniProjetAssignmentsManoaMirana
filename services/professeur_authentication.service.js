@@ -10,6 +10,9 @@ const professeurAuthenticationService = {
 
 function inscription(req, res) {
   let professeur = new Professeur();
+  if (req.file) {
+    professeur.photo = req.file.path;
+  }
   professeur.nom = req.body.nom;
   professeur.prenom = req.body.prenom;
   professeur.mail = req.body.mail;

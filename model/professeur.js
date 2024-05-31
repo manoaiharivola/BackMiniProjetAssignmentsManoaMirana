@@ -11,6 +11,7 @@ let ProfesseurSchema = Schema({
     ref: "professeur_connexions",
     required: true,
   },
+  photo: String,
 });
 
 ProfesseurSchema.plugin(mongoosePaginate);
