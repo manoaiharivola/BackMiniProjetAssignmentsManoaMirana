@@ -33,7 +33,7 @@ async function getListeEtudiants(req, res) {
     const nextPage = hasNextPage ? page + 1 : null;
 
     const docs = await Etudiant.find()
-      .select('nom prenom mail')
+      .select("nom prenom mail photo")
       .skip(skip)
       .limit(limit);
 
@@ -54,7 +54,6 @@ async function getListeEtudiants(req, res) {
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
-
 
 module.exports = {
   getEtudiantConnected,

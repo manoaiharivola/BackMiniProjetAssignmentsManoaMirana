@@ -11,6 +11,7 @@ let EtudiantSchema = Schema({
     ref: "etudiant_connexions",
     required: true,
   },
+  photo: String,
 });
 
 EtudiantSchema.plugin(mongoosePaginate);

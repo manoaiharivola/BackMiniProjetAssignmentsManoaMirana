@@ -385,6 +385,7 @@ async function getDevoirsNonNotes(req, res) {
           nom: devoirEtudiant.etudiant_id.nom,
           prenom: devoirEtudiant.etudiant_id.prenom,
           mail: devoirEtudiant.etudiant_id.mail,
+          photo: devoirEtudiant.etudiant_id.photo,
         },
       };
     });
@@ -451,6 +452,7 @@ async function getDevoirsNotes(req, res) {
           nom: devoirEtudiant.etudiant_id.nom,
           prenom: devoirEtudiant.etudiant_id.prenom,
           mail: devoirEtudiant.etudiant_id.mail,
+          photo: devoirEtudiant.etudiant_id.photo,
         },
       };
     });
@@ -560,6 +562,7 @@ async function getDevoirsARendre(req, res) {
                 nom: "$professeur.nom",
                 prenom: "$professeur.prenom",
                 mail: "$professeur.mail",
+                photo: "$professeur.photo",
               },
             },
           },
@@ -653,6 +656,7 @@ async function getDevoirsRendus(req, res) {
                 nom: "$professeur.nom",
                 prenom: "$professeur.prenom",
                 mail: "$professeur.mail",
+                photo: "$professeur.photo",
               },
             },
           },

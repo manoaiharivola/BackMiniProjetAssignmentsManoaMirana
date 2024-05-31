@@ -32,11 +32,11 @@ async function getListeProfesseurs(req, res) {
     const nextPage = hasNextPage ? page + 1 : null;
 
     const docs = await Professeur.find()
-      .select('nom prenom mail')
+      .select("nom prenom mail photo")
       .skip(skip)
       .limit(limit);
 
-     res.status(200).json({
+    res.status(200).json({
       docs,
       totalDocs,
       limit,
@@ -50,11 +50,11 @@ async function getListeProfesseurs(req, res) {
     });
   } catch (err) {
     console.error("Erreur lors de la récupération des professeurs :", err);
-    res.status(500).json({ error: 'Erreur serveur' });
+    res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
 module.exports = {
   getProfesseurConnected,
-  getListeProfesseurs
+  getListeProfesseurs,
 };
