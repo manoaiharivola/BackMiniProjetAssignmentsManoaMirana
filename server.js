@@ -67,6 +67,7 @@ app.use((req, res, next) => {
 
 // Router
 configureRouter(app);
+app.use("/api/uploads", express.static("uploads"));
 
 // Démarrer le serveur
 app.listen(port, "0.0.0.0", () => {
