@@ -236,111 +236,143 @@ async function deleteDevoir(req, res) {
 }
 
 // Récupérer les devoirs par professeur connecté (GET)
-function getDevoirsParProfesseur(req, res) {
+async function getDevoirsParProfesseur(req, res) {
   const professeurId = req.professeur._id;
-  const matiereFilter = req.query.matiere_id
-    ? { "matiere._id": ObjectId(req.query.matiere_id) }
-    : {};
+  const matiereFilter = req.query.matiere_id ? { "matiere._id": ObjectId(req.query.matiere_id) } : {};
+  const searchQuery = req.query.search ? { nom: { $regex: req.query.search, $options: 'i' } } : {};
+  const sortField = req.query.sortField || 'dateDeCreation';
+  const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
 
-  let aggregateQuery = Devoir.aggregate([
-    {
-      $lookup: {
-        from: "matieres",
-        localField: "matiere_id",
-        foreignField: "_id",
-        as: "matiere",
-      },
-    },
-    {
-      $unwind: "$matiere",
-    },
-    {
-      $lookup: {
-        from: "professeurs",
-        localField: "matiere.professeur_id",
-        foreignField: "_id",
-        as: "professeur",
-      },
-    },
-    {
-      $unwind: "$professeur",
-    },
-    {
-      $match: {
-        "professeur._id": ObjectId(professeurId),
-        ...matiereFilter,
-      },
-    },
-    {
-      $sort: { dateDeCreation: -1 },
-    },
-    {
-      $project: {
-        _id: 1,
-        nom: 1,
-        description: 1,
-        dateDeCreation: 1,
-        dateDeRendu: 1,
-        matiere_id: 1,
-        "matiere._id": 1,
-        "matiere.nom": 1,
-        "matiere.etudiant_inscrits": 1,
-        "matiere.professeur_id": {
-          _id: "$professeur._id",
-          nom: "$professeur.nom",
-          prenom: "$professeur.prenom",
-          mail: "$professeur.mail",
-          professeur_connexion_id: "$professeur.professeur_connexion_id",
-          __v: "$professeur.__v",
+  try {
+    const aggregateQuery = Devoir.aggregate([
+      {
+        $lookup: {
+          from: "matieres",
+          localField: "matiere_id",
+          foreignField: "_id",
+          as: "matiere",
         },
-        __v: "$matiere.__v",
       },
-    },
-  ]);
-
-  Devoir.aggregatePaginate(
-    aggregateQuery,
-    {
-      page: parseInt(req.query.page) || 1,
-      limit: parseInt(req.query.limit) || 10,
-    },
-    (err, data) => {
-      if (err) {
-        console.error("Erreur lors de la récupération des devoirs :", err);
-        return res.status(500).json({ error: "Erreur serveur" });
-      }
-
-      // Remplacer chaque élément de la liste avec les détails de la matière et du professeur
-      data.docs = data.docs.map((devoir) => {
-        return {
-          _id: devoir._id,
-          nom: devoir.nom,
-          description: devoir.description,
-          dateDeCreation: devoir.dateDeCreation,
-          dateDeRendu: devoir.dateDeRendu,
-          matiere_id: {
-            _id: devoir.matiere._id,
-            etudiant_inscrits: devoir.matiere.etudiant_inscrits,
-            nom: devoir.matiere.nom,
-            professeur_id: {
-              _id: devoir.matiere.professeur_id._id,
-              nom: devoir.matiere.professeur_id.nom,
-              prenom: devoir.matiere.professeur_id.prenom,
-              mail: devoir.matiere.professeur_id.mail,
-              professeur_connexion_id:
-                devoir.matiere.professeur_id.professeur_connexion_id,
-              __v: devoir.matiere.professeur_id.__v,
-            },
-            __v: devoir.matiere.__v,
+      {
+        $unwind: "$matiere",
+      },
+      {
+        $lookup: {
+          from: "professeurs",
+          localField: "matiere.professeur_id",
+          foreignField: "_id",
+          as: "professeur",
+        },
+      },
+      {
+        $unwind: "$professeur",
+      },
+      {
+        $match: {
+          "professeur._id": ObjectId(professeurId),
+          ...matiereFilter,
+          ...searchQuery,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          nom: 1,
+          description: 1,
+          dateDeCreation: 1,
+          dateDeRendu: 1,
+          matiere_id: 1,
+          "matiere._id": 1,
+          "matiere.nom": 1,
+          "matiere.etudiant_inscrits": 1,
+          "matiere.professeur_id": {
+            _id: "$professeur._id",
+            nom: "$professeur.nom",
+            prenom: "$professeur.prenom",
+            mail: "$professeur.mail",
+            professeur_connexion_id: "$professeur.professeur_connexion_id",
+            __v: "$professeur.__v",
           },
-          __v: devoir.__v,
-        };
-      });
+          __v: "$matiere.__v",
+        },
+      },
+      { $sort: { [sortField]: sortOrder } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
 
-      res.json(data);
-    }
-  );
+    // Get the total count of documents
+    const totalDocsQuery = Devoir.aggregate([
+      {
+        $lookup: {
+          from: "matieres",
+          localField: "matiere_id",
+          foreignField: "_id",
+          as: "matiere",
+        },
+      },
+      {
+        $unwind: "$matiere",
+      },
+      {
+        $lookup: {
+          from: "professeurs",
+          localField: "matiere.professeur_id",
+          foreignField: "_id",
+          as: "professeur",
+        },
+      },
+      {
+        $unwind: "$professeur",
+      },
+      {
+        $match: {
+          "professeur._id": ObjectId(professeurId),
+          ...matiereFilter,
+          ...searchQuery,
+        },
+      },
+      {
+        $count: "totalDocs"
+      }
+    ]);
+
+    const totalDocsResult = await totalDocsQuery.exec();
+    const totalDocs = totalDocsResult[0] ? totalDocsResult[0].totalDocs : 0;
+
+    // Get the paginated results
+    const paginatedResults = await aggregateQuery.exec();
+
+    const totalPages = Math.ceil(totalDocs / limit);
+    const pagingCounter = (page - 1) * limit + 1;
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    res.json({
+      docs: paginatedResults,
+      totalDocs,
+      limit,
+      page,
+      totalPages,
+      pagingCounter,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    });
+  } catch (err) {
+    console.error("Erreur lors de la récupération des devoirs :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 }
+
+    
+
 
 // Récupérer les devoirs non notés par les étudiants (GET)
 async function getDevoirsNonNotes(req, res) {
