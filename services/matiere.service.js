@@ -30,6 +30,7 @@ function getProfesseurMatieres(req, res) {
 
   let aggregateQuery = Matiere.aggregate([
     { $match: { professeur_id: ObjectId(professeurId) } },
+    { $sort: { nom: 1 } },
   ]);
 
   Matiere.aggregatePaginate(
@@ -70,7 +71,7 @@ function getMatiere(req, res) {
 // Ajout d'un matiere (POST)
 function postMatiere(req, res) {
   let matiere = new Matiere();
-  if(req.file){
+  if (req.file) {
     matiere.photo = req.file.path;
   }
   Matiere.findOne({ nom: req.body.nom }, (err, existingMatiere) => {

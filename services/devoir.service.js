@@ -161,7 +161,9 @@ async function updateDevoir(req, res) {
     // Vérifier si le titre existe déjà pour un autre devoir
     const existingDevoir = await Devoir.findOne({ nom, _id: { $ne: _id } });
     if (existingDevoir) {
-      return res.status(400).json({ error: "Un devoir avec ce titre existe déjà." });
+      return res
+        .status(400)
+        .json({ error: "Un devoir avec ce titre existe déjà." });
     }
 
     // Vérifier si la date limite est dans le passé
@@ -169,7 +171,9 @@ async function updateDevoir(req, res) {
     today.setHours(0, 0, 0, 0);
     const dateRendu = new Date(dateDeRendu);
     if (dateDeRendu && dateRendu < today) {
-      return res.status(400).json({ error: "La date limite ne peut pas être une date passée." });
+      return res
+        .status(400)
+        .json({ error: "La date limite ne peut pas être une date passée." });
     }
 
     // Construire l'objet de mise à jour
@@ -179,9 +183,10 @@ async function updateDevoir(req, res) {
     if (dateDeRendu) updateFields.dateDeRendu = dateDeRendu;
 
     // Mettre à jour le devoir
-    const updatedDevoir = await Devoir.findByIdAndUpdate(_id, updateFields, { new: true });
+    const updatedDevoir = await Devoir.findByIdAndUpdate(_id, updateFields, {
+      new: true,
+    });
     res.json({ message: "Mise à jour effectuée", devoir: updatedDevoir });
-
   } catch (err) {
     console.error("Erreur lors de la mise à jour du devoir :", err);
     res.status(500).json({ error: "Erreur serveur" });
@@ -189,9 +194,8 @@ async function updateDevoir(req, res) {
 }
 
 module.exports = {
-  updateDevoir
+  updateDevoir,
 };
-
 
 // suppression d'un devoir (DELETE)
 async function deleteDevoir(req, res) {
@@ -201,11 +205,17 @@ async function deleteDevoir(req, res) {
     const devoirId = req.params.id;
 
     // Supprimer les devoirs des étudiants
-    const resultDevoirEtudiant = await DevoirEtudiant.deleteMany({ devoir_id: devoirId }).session(session);
-    console.log(`Nombre de devoirs des étudiants supprimés : ${resultDevoirEtudiant.deletedCount}`);
+    const resultDevoirEtudiant = await DevoirEtudiant.deleteMany({
+      devoir_id: devoirId,
+    }).session(session);
+    console.log(
+      `Nombre de devoirs des étudiants supprimés : ${resultDevoirEtudiant.deletedCount}`
+    );
 
     // Supprimer le devoir principal
-    const resultDevoir = await Devoir.findByIdAndRemove(devoirId).session(session);
+    const resultDevoir = await Devoir.findByIdAndRemove(devoirId).session(
+      session
+    );
     if (!resultDevoir) {
       await session.abortTransaction();
       session.endSession();
@@ -214,7 +224,9 @@ async function deleteDevoir(req, res) {
 
     await session.commitTransaction();
     session.endSession();
-    res.json({ message: `${resultDevoir.nom} et tous les devoirs associés des étudiants ont été supprimés` });
+    res.json({
+      message: `${resultDevoir.nom} et tous les devoirs associés des étudiants ont été supprimés`,
+    });
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
@@ -258,6 +270,9 @@ function getDevoirsParProfesseur(req, res) {
         "professeur._id": ObjectId(professeurId),
         ...matiereFilter,
       },
+    },
+    {
+      $sort: { dateDeCreation: -1 },
     },
     {
       $project: {
@@ -489,7 +504,6 @@ async function noterDevoir(req, res) {
   }
 }
 
-
 // Récupérer les devoirs à rendre par un étudiant (GET)
 async function getDevoirsARendre(req, res) {
   const etudiantId = req.etudiant._id;
@@ -501,31 +515,31 @@ async function getDevoirsARendre(req, res) {
       { $match: { etudiant_id: ObjectId(etudiantId), dateLivraison: null } },
       {
         $lookup: {
-          from: 'devoirs',
-          localField: 'devoir_id',
-          foreignField: '_id',
-          as: 'devoir'
-        }
+          from: "devoirs",
+          localField: "devoir_id",
+          foreignField: "_id",
+          as: "devoir",
+        },
       },
-      { $unwind: '$devoir' },
+      { $unwind: "$devoir" },
       {
         $lookup: {
-          from: 'matieres',
-          localField: 'devoir.matiere_id',
-          foreignField: '_id',
-          as: 'matiere'
-        }
+          from: "matieres",
+          localField: "devoir.matiere_id",
+          foreignField: "_id",
+          as: "matiere",
+        },
       },
-      { $unwind: '$matiere' },
+      { $unwind: "$matiere" },
       {
         $lookup: {
-          from: 'professeurs',
-          localField: 'matiere.professeur_id',
-          foreignField: '_id',
-          as: 'professeur'
-        }
+          from: "professeurs",
+          localField: "matiere.professeur_id",
+          foreignField: "_id",
+          as: "professeur",
+        },
       },
-      { $unwind: '$professeur' },
+      { $unwind: "$professeur" },
       {
         $project: {
           _id: 1,
@@ -534,50 +548,68 @@ async function getDevoirsARendre(req, res) {
           dateLivraison: 1,
           dateNotation: 1,
           devoir_id: {
-            _id: '$devoir._id',
-            nom: '$devoir.nom',
-            description: '$devoir.description',
-            dateDeCreation: '$devoir.dateDeCreation',
-            dateDeRendu: '$devoir.dateDeRendu',
+            _id: "$devoir._id",
+            nom: "$devoir.nom",
+            description: "$devoir.description",
+            dateDeCreation: "$devoir.dateDeCreation",
+            dateDeRendu: "$devoir.dateDeRendu",
             matiere_id: {
-              _id: '$matiere._id',
-              nom: '$matiere.nom',
-              photo: '$matiere.photo',
+              _id: "$matiere._id",
+              nom: "$matiere.nom",
+              photo: "$matiere.photo",
               professeur_id: {
-                _id: '$professeur._id',
-                nom: '$professeur.nom',
-                prenom: '$professeur.prenom',
-                mail: '$professeur.mail'
-              }
-            }
-          }
-        }
-      }
+                _id: "$professeur._id",
+                nom: "$professeur.nom",
+                prenom: "$professeur.prenom",
+                mail: "$professeur.mail",
+              },
+            },
+          },
+        },
+      },
     ]);
 
     const options = { page, limit };
-    DevoirEtudiant.aggregatePaginate(aggregateQuery, options, (err, results) => {
-      if (err) {
-        console.error('Erreur lors de la récupération des devoirs à rendre:', err);
-        return res.status(500).json({ error: 'Erreur serveur' });
+    DevoirEtudiant.aggregatePaginate(
+      aggregateQuery,
+      options,
+      (err, results) => {
+        if (err) {
+          console.error(
+            "Erreur lors de la récupération des devoirs à rendre:",
+            err
+          );
+          return res.status(500).json({ error: "Erreur serveur" });
+        }
+
+        results.docs.sort((a, b) => {
+          const aEnRetard = new Date(a.devoir_id.dateDeRendu) < new Date();
+          const bEnRetard = new Date(b.devoir_id.dateDeRendu) < new Date();
+
+          if (aEnRetard && !bEnRetard) return -1;
+          if (!aEnRetard && bEnRetard) return 1;
+          if (
+            new Date(a.devoir_id.dateDeRendu) <
+            new Date(b.devoir_id.dateDeRendu)
+          )
+            return -1;
+          if (
+            new Date(a.devoir_id.dateDeRendu) >
+            new Date(b.devoir_id.dateDeRendu)
+          )
+            return 1;
+          return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
+        });
+
+        res.json(results);
       }
-
-      results.docs.sort((a, b) => {
-        const aEnRetard = new Date(a.devoir_id.dateDeRendu) < new Date();
-        const bEnRetard = new Date(b.devoir_id.dateDeRendu) < new Date();
-
-        if (aEnRetard && !bEnRetard) return -1;
-        if (!aEnRetard && bEnRetard) return 1;
-        if (new Date(a.devoir_id.dateDeRendu) < new Date(b.devoir_id.dateDeRendu)) return -1;
-        if (new Date(a.devoir_id.dateDeRendu) > new Date(b.devoir_id.dateDeRendu)) return 1;
-        return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
-      });
-
-      res.json(results);
-    });
+    );
   } catch (error) {
-    console.error('Erreur lors de la récupération des devoirs à rendre:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error(
+      "Erreur lors de la récupération des devoirs à rendre:",
+      error
+    );
+    res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
@@ -589,34 +621,39 @@ async function getDevoirsRendus(req, res) {
 
   try {
     const aggregateQuery = DevoirEtudiant.aggregate([
-      { $match: { etudiant_id: ObjectId(etudiantId), dateLivraison: { $ne: null } } },
+      {
+        $match: {
+          etudiant_id: ObjectId(etudiantId),
+          dateLivraison: { $ne: null },
+        },
+      },
       {
         $lookup: {
-          from: 'devoirs',
-          localField: 'devoir_id',
-          foreignField: '_id',
-          as: 'devoir'
-        }
+          from: "devoirs",
+          localField: "devoir_id",
+          foreignField: "_id",
+          as: "devoir",
+        },
       },
-      { $unwind: '$devoir' },
+      { $unwind: "$devoir" },
       {
         $lookup: {
-          from: 'matieres',
-          localField: 'devoir.matiere_id',
-          foreignField: '_id',
-          as: 'matiere'
-        }
+          from: "matieres",
+          localField: "devoir.matiere_id",
+          foreignField: "_id",
+          as: "matiere",
+        },
       },
-      { $unwind: '$matiere' },
+      { $unwind: "$matiere" },
       {
         $lookup: {
-          from: 'professeurs',
-          localField: 'matiere.professeur_id',
-          foreignField: '_id',
-          as: 'professeur'
-        }
+          from: "professeurs",
+          localField: "matiere.professeur_id",
+          foreignField: "_id",
+          as: "professeur",
+        },
       },
-      { $unwind: '$professeur' },
+      { $unwind: "$professeur" },
       {
         $project: {
           _id: 1,
@@ -625,47 +662,54 @@ async function getDevoirsRendus(req, res) {
           dateLivraison: 1,
           dateNotation: 1,
           devoir_id: {
-            _id: '$devoir._id',
-            nom: '$devoir.nom',
-            description: '$devoir.description',
-            dateDeCreation: '$devoir.dateDeCreation',
-            dateDeRendu: '$devoir.dateDeRendu',
+            _id: "$devoir._id",
+            nom: "$devoir.nom",
+            description: "$devoir.description",
+            dateDeCreation: "$devoir.dateDeCreation",
+            dateDeRendu: "$devoir.dateDeRendu",
             matiere_id: {
-              _id: '$matiere._id',
-              nom: '$matiere.nom',
-              photo: '$matiere.photo',
+              _id: "$matiere._id",
+              nom: "$matiere.nom",
+              photo: "$matiere.photo",
               professeur_id: {
-                _id: '$professeur._id',
-                nom: '$professeur.nom',
-                prenom: '$professeur.prenom',
-                mail: '$professeur.mail'
-              }
-            }
-          }
-        }
-      }
+                _id: "$professeur._id",
+                nom: "$professeur.nom",
+                prenom: "$professeur.prenom",
+                mail: "$professeur.mail",
+              },
+            },
+          },
+        },
+      },
     ]);
 
     const options = { page, limit };
-    DevoirEtudiant.aggregatePaginate(aggregateQuery, options, (err, results) => {
-      if (err) {
-        console.error('Erreur lors de la récupération des devoirs rendus:', err);
-        return res.status(500).json({ error: 'Erreur serveur' });
+    DevoirEtudiant.aggregatePaginate(
+      aggregateQuery,
+      options,
+      (err, results) => {
+        if (err) {
+          console.error(
+            "Erreur lors de la récupération des devoirs rendus:",
+            err
+          );
+          return res.status(500).json({ error: "Erreur serveur" });
+        }
+
+        results.docs.sort((a, b) => {
+          if (a.note === null && b.note !== null) return -1;
+          if (a.note !== null && b.note === null) return 1;
+          if (new Date(a.dateLivraison) > new Date(b.dateLivraison)) return -1;
+          if (new Date(a.dateLivraison) < new Date(b.dateLivraison)) return 1;
+          return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
+        });
+
+        res.json(results);
       }
-
-      results.docs.sort((a, b) => {
-        if (a.note === null && b.note !== null) return -1;
-        if (a.note !== null && b.note === null) return 1;
-        if (new Date(a.dateLivraison) > new Date(b.dateLivraison)) return -1;
-        if (new Date(a.dateLivraison) < new Date(b.dateLivraison)) return 1;
-        return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
-      });
-
-      res.json(results);
-    });
+    );
   } catch (error) {
-    console.error('Erreur lors de la récupération des devoirs rendus:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error("Erreur lors de la récupération des devoirs rendus:", error);
+    res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
@@ -674,23 +718,26 @@ async function getDevoirDetailsPourEtudiant(req, res) {
   const etudiantId = req.etudiant._id;
   const devoirEtudiantId = req.params.id;
 
-  
   try {
-    const devoirEtudiant = await DevoirEtudiant.findOne({ _id: ObjectId(devoirEtudiantId), etudiant_id: ObjectId(etudiantId) })
-      .populate({
-        path: 'devoir_id',
+    const devoirEtudiant = await DevoirEtudiant.findOne({
+      _id: ObjectId(devoirEtudiantId),
+      etudiant_id: ObjectId(etudiantId),
+    }).populate({
+      path: "devoir_id",
+      populate: {
+        path: "matiere_id",
         populate: {
-          path: 'matiere_id',
-          populate: {
-            path: 'professeur_id',
-            select: 'nom prenom mail'
-          },
-          select: 'nom photo professeur_id'
-        }
-      });
+          path: "professeur_id",
+          select: "nom prenom mail",
+        },
+        select: "nom photo professeur_id",
+      },
+    });
 
     if (!devoirEtudiant) {
-      return res.status(404).json({ error: 'Devoir non trouvé pour cet étudiant' });
+      return res
+        .status(404)
+        .json({ error: "Devoir non trouvé pour cet étudiant" });
     }
 
     const result = {
@@ -714,15 +761,18 @@ async function getDevoirDetailsPourEtudiant(req, res) {
             nom: devoirEtudiant.devoir_id.matiere_id.professeur_id.nom,
             prenom: devoirEtudiant.devoir_id.matiere_id.professeur_id.prenom,
             mail: devoirEtudiant.devoir_id.matiere_id.professeur_id.mail,
-          }
-        }
-      }
+          },
+        },
+      },
     };
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('Erreur lors de la récupération des détails du devoir pour un étudiant:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error(
+      "Erreur lors de la récupération des détails du devoir pour un étudiant:",
+      error
+    );
+    res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
@@ -731,22 +781,26 @@ async function getDevoirDetailsPourProfesseur(req, res) {
   const devoirEtudiantId = req.params.id;
 
   try {
-    const devoirEtudiant = await DevoirEtudiant.findOne({ _id: ObjectId(devoirEtudiantId) })
+    const devoirEtudiant = await DevoirEtudiant.findOne({
+      _id: ObjectId(devoirEtudiantId),
+    })
       .populate({
-        path: 'devoir_id',
+        path: "devoir_id",
         populate: {
-          path: 'matiere_id',
+          path: "matiere_id",
           populate: {
-            path: 'professeur_id',
-            select: 'nom prenom mail'
+            path: "professeur_id",
+            select: "nom prenom mail",
           },
-          select: 'nom photo'
-        }
+          select: "nom photo",
+        },
       })
-      .populate('etudiant_id', 'nom prenom mail');
+      .populate("etudiant_id", "nom prenom mail");
 
     if (!devoirEtudiant) {
-      return res.status(404).json({ error: 'Devoir non trouvé pour ce professeur' });
+      return res
+        .status(404)
+        .json({ error: "Devoir non trouvé pour ce professeur" });
     }
 
     const result = {
@@ -770,22 +824,27 @@ async function getDevoirDetailsPourProfesseur(req, res) {
             nom: devoirEtudiant.devoir_id.matiere_id.professeur_id.nom,
             prenom: devoirEtudiant.devoir_id.matiere_id.professeur_id.prenom,
             mail: devoirEtudiant.devoir_id.matiere_id.professeur_id.mail,
-            professeur_connexion_id: devoirEtudiant.devoir_id.matiere_id.professeur_id.professeur_connexion_id
-          }
-        }
+            professeur_connexion_id:
+              devoirEtudiant.devoir_id.matiere_id.professeur_id
+                .professeur_connexion_id,
+          },
+        },
       },
       etudiant_id: {
         _id: devoirEtudiant.etudiant_id._id,
         nom: devoirEtudiant.etudiant_id.nom,
         prenom: devoirEtudiant.etudiant_id.prenom,
-        mail: devoirEtudiant.etudiant_id.mail
-      }
+        mail: devoirEtudiant.etudiant_id.mail,
+      },
     };
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('Erreur lors de la récupération des détails du devoir pour un professeur:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error(
+      "Erreur lors de la récupération des détails du devoir pour un professeur:",
+      error
+    );
+    res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
@@ -795,23 +854,30 @@ async function rendreDevoir(req, res) {
   const devoirEtudiantId = req.params.id;
 
   try {
-    const devoirEtudiant = await DevoirEtudiant.findOne({ _id: ObjectId(devoirEtudiantId), etudiant_id: ObjectId(etudiantId) });
+    const devoirEtudiant = await DevoirEtudiant.findOne({
+      _id: ObjectId(devoirEtudiantId),
+      etudiant_id: ObjectId(etudiantId),
+    });
 
     if (!devoirEtudiant) {
-      return res.status(404).json({ error: 'Devoir non trouvé pour cet étudiant' });
+      return res
+        .status(404)
+        .json({ error: "Devoir non trouvé pour cet étudiant" });
     }
 
     if (devoirEtudiant.dateLivraison) {
-      return res.status(400).json({ error: 'Ce devoir a déjà été rendu' });
+      return res.status(400).json({ error: "Ce devoir a déjà été rendu" });
     }
 
     devoirEtudiant.dateLivraison = new Date();
     await devoirEtudiant.save();
 
-    res.status(200).json({ message: 'Devoir rendu avec succès', devoirEtudiant });
+    res
+      .status(200)
+      .json({ message: "Devoir rendu avec succès", devoirEtudiant });
   } catch (error) {
-    console.error('Erreur lors de la remise du devoir:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error("Erreur lors de la remise du devoir:", error);
+    res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
@@ -829,6 +895,5 @@ module.exports = {
   getDevoirsRendus,
   getDevoirDetailsPourEtudiant,
   getDevoirDetailsPourProfesseur,
-  rendreDevoir
+  rendreDevoir,
 };
-
