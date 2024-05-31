@@ -469,8 +469,6 @@ async function noterDevoir(req, res) {
 // Récupérer les devoirs à rendre par un étudiant (GET)
 async function getDevoirsARendre(req, res) {
   const etudiantId = req.etudiant._id;
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
 
   try {
     const aggregateQuery = DevoirEtudiant.aggregate([
@@ -531,37 +529,30 @@ async function getDevoirsARendre(req, res) {
       }
     ]);
 
-    const options = { page, limit };
-    DevoirEtudiant.aggregatePaginate(aggregateQuery, options, (err, results) => {
-      if (err) {
-        console.error('Erreur lors de la récupération des devoirs à rendre:', err);
-        return res.status(500).json({ error: 'Erreur serveur' });
-      }
+    const results = await aggregateQuery.exec();
 
-      results.docs.sort((a, b) => {
-        const aEnRetard = new Date(a.devoir_id.dateDeRendu) < new Date();
-        const bEnRetard = new Date(b.devoir_id.dateDeRendu) < new Date();
+    results.sort((a, b) => {
+      const aEnRetard = new Date(a.devoir_id.dateDeRendu) < new Date();
+      const bEnRetard = new Date(b.devoir_id.dateDeRendu) < new Date();
 
-        if (aEnRetard && !bEnRetard) return -1;
-        if (!aEnRetard && bEnRetard) return 1;
-        if (new Date(a.devoir_id.dateDeRendu) < new Date(b.devoir_id.dateDeRendu)) return -1;
-        if (new Date(a.devoir_id.dateDeRendu) > new Date(b.devoir_id.dateDeRendu)) return 1;
-        return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
-      });
-
-      res.json(results);
+      if (aEnRetard && !bEnRetard) return -1;
+      if (!aEnRetard && bEnRetard) return 1;
+      if (new Date(a.devoir_id.dateDeRendu) < new Date(b.devoir_id.dateDeRendu)) return -1;
+      if (new Date(a.devoir_id.dateDeRendu) > new Date(b.devoir_id.dateDeRendu)) return 1;
+      return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
     });
+
+    res.json(results);
   } catch (error) {
     console.error('Erreur lors de la récupération des devoirs à rendre:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
+
 // Récupérer les devoirs rendus par un étudiant (GET)
 async function getDevoirsRendus(req, res) {
   const etudiantId = req.etudiant._id;
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
 
   try {
     const aggregateQuery = DevoirEtudiant.aggregate([
@@ -622,28 +613,23 @@ async function getDevoirsRendus(req, res) {
       }
     ]);
 
-    const options = { page, limit };
-    DevoirEtudiant.aggregatePaginate(aggregateQuery, options, (err, results) => {
-      if (err) {
-        console.error('Erreur lors de la récupération des devoirs rendus:', err);
-        return res.status(500).json({ error: 'Erreur serveur' });
-      }
+    const results = await aggregateQuery.exec();
 
-      results.docs.sort((a, b) => {
-        if (a.note === null && b.note !== null) return -1;
-        if (a.note !== null && b.note === null) return 1;
-        if (new Date(a.dateLivraison) > new Date(b.dateLivraison)) return -1;
-        if (new Date(a.dateLivraison) < new Date(b.dateLivraison)) return 1;
-        return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
-      });
-
-      res.json(results);
+    results.sort((a, b) => {
+      if (a.note === null && b.note !== null) return -1;
+      if (a.note !== null && b.note === null) return 1;
+      if (new Date(a.dateLivraison) > new Date(b.dateLivraison)) return -1;
+      if (new Date(a.dateLivraison) < new Date(b.dateLivraison)) return 1;
+      return a.devoir_id.nom.localeCompare(b.devoir_id.nom);
     });
+
+    res.json(results);
   } catch (error) {
     console.error('Erreur lors de la récupération des devoirs rendus:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 }
+
 
 // Récupérer les détails d'un devoir pour un étudiant (GET)
 async function getDevoirDetailsPourEtudiant(req, res) {

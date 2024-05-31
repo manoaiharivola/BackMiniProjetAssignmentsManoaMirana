@@ -18,9 +18,9 @@ router.get(
   devoirService.getDevoirsParProfesseur
 );
 
-router.get('/etudiant/a-rendre', authenticationMiddleware(),devoirService.getDevoirsARendre);
+router.get('/etudiant/a-rendre', authenticationMiddleware(), devoirService.getDevoirsARendre);
 
-router.get('/etudiant/rendus', authenticationMiddleware(),devoirService.getDevoirsRendus);
+router.get('/etudiant/rendus', authenticationMiddleware(), devoirService.getDevoirsRendus);
 
 router.get('/devoir-etudiant/:id', authenticationMiddleware(), devoirService.getDevoirDetailsPourEtudiant);
 
